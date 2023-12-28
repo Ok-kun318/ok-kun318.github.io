@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <style>
+        #editor {
+            resize: none;
+            width: 49.35%;
+            height: 89.7vh;
+            float: left;
+        }
+
+        #preview {
+            width: 50%;
+            height: 90vh;
+            float: right;
+        }
+    </style>
+</head>
+
+<body>
+    <textarea id="editor" oninput="updatePreview()">
+&lt;!DOCTYPE html&gt;
+&lt;html lang=&quot;ja&quot;&gt;
+&lt;head&gt;
+    &lt;meta charset=&quot;UTF-8&quot;&gt;
+    &lt;meta name=&quot;viewport&quot; content=&quot;width=device-width, initial-scale=1.0&quot;&gt;
+    &lt;title&gt;Document&lt;/title&gt;
+&lt;/head&gt;
+&lt;body&gt;
+    &lt;h1&gt;h1&lt;/h1&gt;
+    &lt;h2&gt;h2&lt;/h2&gt;
+    &lt;h3&gt;h3&lt;/h3&gt;
+    &lt;h4&gt;h4&lt;/h4&gt;
+    &lt;h5&gt;h5&lt;/h5&gt;
+    &lt;h6&gt;h6&lt;/h6&gt;
+&lt;/body&gt;
+&lt;/html&gt;
+    </textarea>
+    <iframe id="preview"></iframe>
+
+    <button onclick="save()">セーブ</button>
+    <button onclick="load()">ロード</button>
+    <button onclick="download()">ダウンロード</button>
+    <input type="file" id="upload" onchange="upload()">
+    <button onclick="togglePreviewOnly()">プレビューのみ表示</button>
+
+    <script src="/Web_App/HTML_Editor/index.js"></script>
+</body>
+
+</html>

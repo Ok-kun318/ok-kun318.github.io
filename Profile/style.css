@@ -1,0 +1,25 @@
+@media (prefers-color-scheme: light) {
+    :root {
+      --bgb: #000;
+
+    }
+  }
+  
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bgb: #fff;
+
+    }
+  }
+.hnbn {
+    line-height: 1em;
+}
+
+body {
+    margin-top: 85px;
+}
+
+table {
+    border-color: var(--bgb);
+height: 4em;
+}
