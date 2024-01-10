@@ -14,4 +14,7 @@ function loadFile() {
 
         reader.readAsText(file, 'UTF-8');
     }
+    const element = document.getElementById('fileInput'); 
+    element.remove();
+
 }
