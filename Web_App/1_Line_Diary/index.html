@@ -198,9 +198,14 @@
   }
 
   function formatDate(dateString) {
-    const options = { year: 'numeric', month: '2-digit', day: '2-digit', weekday: 'short' };
-    return new Date(dateString).toLocaleDateString('ja-JP', options);
-  }
+  const options = { year: 'numeric', month: '2-digit', day: '2-digit', weekday: 'short' };
+  const [datePart, timePart] = dateString.split(', ');
+  const [month, day, year] = datePart.split('/');
+  const [hour, minute, second] = timePart.split(':');
+  const formattedDate = new Date(year, month - 1, day, hour, minute, second).toLocaleDateString('ja-JP', options);
+  return formattedDate;
+}
+
 
 </script>
 
