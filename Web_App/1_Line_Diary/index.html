@@ -41,15 +41,14 @@
 </table>
 
 <button onclick="promptForDiaryEntry()">追加</button>
+<button onclick="downloadCSV()">CSVとして保存</button>
+<input type="file" id="fileInput" accept=".csv" onchange="uploadCSV(event)">
 
 <script>
-  // ローカルストレージからデータを取得
   const diaryEntries = JSON.parse(localStorage.getItem('diaryEntries')) || [];
 
-  // テーブルのtbody要素を取得
   const tbody = document.getElementById('diaryTable').getElementsByTagName('tbody')[0];
 
-  // データをテーブルに表示
   function displayDiaryEntries() {
     tbody.innerHTML = '';
     diaryEntries.forEach(entry => {
@@ -60,7 +59,6 @@
     });
   }
 
-  // データを追加
   function addDiaryEntry(text) {
     const date = new Date().toLocaleString();
     const entry = { id: Date.now(), date, text };
@@ -69,7 +67,6 @@
     saveToLocalStorage();
   }
 
-  // データを削除
   function deleteEntry(id) {
     const index = diaryEntries.findIndex(entry => entry.id === id);
     diaryEntries.splice(index, 1);
@@ -77,7 +74,6 @@
     saveToLocalStorage();
   }
 
-  // データを編集
   function editEntry(id) {
     const index = diaryEntries.findIndex(entry => entry.id === id);
     const newText = prompt('新しい1行日記を入力してください', diaryEntries[index].text);
@@ -88,15 +84,12 @@
     }
   }
 
-  // ローカルストレージに保存
   function saveToLocalStorage() {
     localStorage.setItem('diaryEntries', JSON.stringify(diaryEntries));
   }
 
-  // ページ読み込み時にデータを表示
   displayDiaryEntries();
 
-  // 追加ボタンをクリックしたときに1行日記を入力
   function promptForDiaryEntry() {
     const text = prompt('1行日記を入力してください');
     if (text !== null) {
@@ -104,7 +97,49 @@
     }
   }
 
-  // 日付を指定のフォーマットに変換
+  function downloadCSV() {
+    const csvContent = "data:text/csv;charset=utf-8," + diaryEntries.map(entry => [entry.date, entry.text].join(',')).join('\n');
+    const encodedUri = encodeURI(csvContent);
+    const link = document.createElement("a");
+    link.setAttribute("href", encodedUri);
+    link.setAttribute("download", "1_Line_Diary.csv");
+    document.body.appendChild(link);
+    link.click();
+  }
+
+  function uploadCSV(event) {
+    const fileInput = event.target;
+    const file = fileInput.files[0];
+    
+    if (file) {
+      const reader = new FileReader();
+
+      reader.onload = function(e) {
+        const csvData = e.target.result;
+        parseCSV(csvData);
+      };
+
+      reader.readAsText(file);
+    }
+  }
+
+  function parseCSV(csvData) {
+    const lines = csvData.split('\n');
+    const newEntries = [];
+
+    lines.forEach(line => {
+      const [date, text] = line.split(',');
+      if (date && text) {
+        const entry = { id: Date.now(), date, text };
+        newEntries.push(entry);
+      }
+    });
+
+    diaryEntries.push(...newEntries);
+    displayDiaryEntries();
+    saveToLocalStorage();
+  }
+
   function formatDate(dateString) {
     const options = { year: 'numeric', month: '2-digit', day: '2-digit', weekday: 'short' };
     return new Date(dateString).toLocaleDateString('ja-JP', options);
