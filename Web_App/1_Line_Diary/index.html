@@ -1,6 +1,8 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+  <link rel="styleSheet" href="/all/css/lida.css">
+  <link rel="icon" href="/all/icon/image.png">
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>1行日記</title>
@@ -27,6 +29,15 @@
 </head>
 <body>
 
+    <nav>
+        <ul class="nav">
+            <li><a href="/">HOME</a></li>
+            <li><a href="/Profile/">プロフィール</a></li>
+            <li><a href="/scfura/">フラッシュ計算</a></li>
+            <li><a href="https://github.com/Ok-kun318"><div class="imgbg"><img class="img" src="/all/github/github-mark-white.png"></div></a></li>
+        </ul>
+    </nav>
+
 <table id="diaryTable">
   <thead>
     <tr>
@@ -45,6 +56,7 @@
 <input type="file" id="fileInput" accept=".csv" onchange="uploadCSV(event)">
 
 <script>
+
   const diaryEntries = JSON.parse(localStorage.getItem('diaryEntries')) || [];
 
   const tbody = document.getElementById('diaryTable').getElementsByTagName('tbody')[0];
