@@ -1,11 +1,119 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Document</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>1行日記</title>
+  <style>
+    table {
+      border-collapse: collapse;
+      width: 100%;
+    }
+
+    th, td {
+      border: 1px solid black;
+      padding: 8px;
+      text-align: left;
+    }
+
+    th {
+      background-color: #f2f2f2;
+    }
+
+    input[type="text"] {
+      width: 100%;
+    }
+  </style>
 </head>
 <body>
-    
+
+<table id="diaryTable">
+  <thead>
+    <tr>
+      <th>日付</th>
+      <th>1行日記</th>
+      <th>操作</th>
+    </tr>
+  </thead>
+  <tbody>
+    <!-- Diary entries will be added here dynamically -->
+  </tbody>
+</table>
+
+<button onclick="promptForDiaryEntry()">追加</button>
+
+<script>
+  // ローカルストレージからデータを取得
+  const diaryEntries = JSON.parse(localStorage.getItem('diaryEntries')) || [];
+
+  // テーブルのtbody要素を取得
+  const tbody = document.getElementById('diaryTable').getElementsByTagName('tbody')[0];
+
+  // データをテーブルに表示
+  function displayDiaryEntries() {
+    tbody.innerHTML = '';
+    diaryEntries.forEach(entry => {
+      const row = tbody.insertRow();
+      row.innerHTML = `<td>${formatDate(entry.date)}</td><td>${entry.text}</td>
+                        <td><button onclick="editEntry(${entry.id})">編集</button>
+                            <button onclick="deleteEntry(${entry.id})">削除</button></td>`;
+    });
+  }
+
+  // データを追加
+  function addDiaryEntry(text) {
+    const date = new Date().toLocaleString();
+    const entry = { id: Date.now(), date, text };
+    diaryEntries.push(entry);
+    displayDiaryEntries();
+    saveToLocalStorage();
+  }
+
+  // データを削除
+  function deleteEntry(id) {
+    const index = diaryEntries.findIndex(entry => entry.id === id);
+    diaryEntries.splice(index, 1);
+    displayDiaryEntries();
+    saveToLocalStorage();
+  }
+
+  // データを編集
+  function editEntry(id) {
+    const index = diaryEntries.findIndex(entry => entry.id === id);
+    const newText = prompt('新しい1行日記を入力してください', diaryEntries[index].text);
+    if (newText !== null) {
+      diaryEntries[index].text = newText;
+      displayDiaryEntries();
+      saveToLocalStorage();
+    }
+  }
+
+  // ローカルストレージに保存
+  function saveToLocalStorage() {
+    localStorage.setItem('diaryEntries', JSON.stringify(diaryEntries));
+  }
+
+  // ページ読み込み時にデータを表示
+  displayDiaryEntries();
+
+  // 自動的に時刻を取得して1行日記を追加
+  addDiaryEntry('初めての1行日記');
+
+  // 追加ボタンをクリックしたときに1行日記を入力
+  function promptForDiaryEntry() {
+    const text = prompt('1行日記を入力してください');
+    if (text !== null) {
+      addDiaryEntry(text);
+    }
+  }
+
+  // 日付を指定のフォーマットに変換
+  function formatDate(dateString) {
+    const options = { year: 'numeric', month: '2-digit', day: '2-digit', weekday: 'short' };
+    return new Date(dateString).toLocaleDateString('ja-JP', options);
+  }
+
+</script>
+
 </body>
 </html>
