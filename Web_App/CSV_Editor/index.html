@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CSVエディタ</title>
+    <link rel="styleSheet" href="/all/css/lida.css">
+    <link rel="icon" href="/all/icon/image.png">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+        }
+
+        textarea {
+            width: 100%;
+            height: 300px;
+            margin-bottom: 10px;
+        }
+
+        button {
+            padding: 10px;
+            font-size: 16px;
+            cursor: pointer;
+        }
+        textarea{
+            background-color: var(--bgcolor);
+        }
+    </style>
+</head>
+<body>
+    <nav>
+        <ul class="nav">
+            <li><a href="/">HOME</a></li>
+            <li><a href="/Profile/">プロフィール</a></li>
+            <li><a href="/Web_App/">Web App</a></li>
+            <li><a href="/scfura/">フラッシュ計算</a></li>
+            <li><a href="https://github.com/Ok-kun318"><div class="imgbg"><img class="img" src="/all/github/github-mark-white.png"></div></a></li>
+        </ul>
+    </nav>
+
+
+    <h2>CSVエディタ</h2>
+
+    <input type="file" id="fileInput" accept=".csv" onchange="handleFile()">
+
+    <textarea id="csvInput" placeholder="CSVデータを入力してください"></textarea>
+
+    <button onclick="downloadCSV()">CSVダウンロード</button>
+
+    <script>
+        function handleFile() {
+            const fileInput = document.getElementById('fileInput');
+            const file = fileInput.files[0];
+
+            const reader = new FileReader();
+
+            reader.onload = function(e) {
+                document.getElementById('csvInput').value = e.target.result;
+            };
+
+            reader.readAsText(file);
+        }
+
+        function downloadCSV() {
+            const csvData = document.getElementById('csvInput').value;
+
+            const blob = new Blob([csvData], { type: 'text/csv' });
+
+            const link = document.createElement('a');
+            link.href = window.URL.createObjectURL(blob);
+            link.download = 'output.csv';
+
+            document.body.appendChild(link);
+            link.click();
+
+            document.body.removeChild(link);
+        }
+    </script>
+</body>
+</html>
