@@ -24,28 +24,7 @@
 <input type="file" id="fileInput" accept=".html" onchange="loadFile()">
 <iframe id="fileFrame" width="100%" height="500px" frameborder="0"></iframe>
 
-<script>
-    function loadFile() {
-    const fileInput = document.getElementById('fileInput');
-    const fileFrame = document.getElementById('fileFrame');
-
-    const file = fileInput.files[0];
-
-    if (file) {
-        const reader = new FileReader();
-
-        reader.onload = function (e) {
-            const content = e.target.result;
-            fileFrame.srcdoc = content;
-        };
-
-        reader.readAsText(file, 'UTF-8');
-    }
-    const element = document.getElementById('fileInput'); 
-    element.remove();
-
-}
-</script>
+<script src="/Web_App/HTML_Viewer/index.js"></script>
 
 </body>
 </html>
