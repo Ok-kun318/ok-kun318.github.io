@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>QRコード生成</title>
+  <link rel="icon" href="/all/icon/image.png">
+  <script src="/Web_App/qr/clipboard.min.js"></script>
+  <script src="/Web_App/qr/qrcode.min.js"></script>
+  <script src="/Web_App/qr/index.js"></script>
+  <!-- 
+    <script src="https://cdn.rawgit.com/davidshimjs/qrcodejs/gh-pages/qrcode.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/clipboard.js/2.0.8/clipboard.min.js"></script>
+  -->
+  <link rel="stylesheet" href="/all/css/lida.css">
+</head>
+<body>
+  <nav>
+    <ul class="nav">
+        <li><a href="/">HOME</a></li>
+        <li><a href="/Profile/">プロフィール</a></li>
+        <li><a href="/Web_App/">Web App</a></li>
+        <li><a href="/scfura/">フラッシュ計算</a></li>
+        <li><a href="https://github.com/Ok-kun318"><div class="imgbg"><img class="img" src="/all/github/github-mark-white.png"></div></a></li>
+    </ul>
+</nav>
+
+
+  <h1>QRコード生成</h1>
+  <h2>このURL短縮機能はrinu.cfのAPIを使用しています。ActiveTKさんに感謝します</rinu></h2>
+  <label for="text-input">テキストを入力してください:</label>
+  <input type="text" id="text-input" placeholder="QRコードに変換するテキスト">
+  
+  <!-- チェックボックスの追加 -->
+  <label>
+    <input type="checkbox" id="useShortenAPI"> 短縮APIを使用
+  </label>
+  <button onclick="generateQRCode()">QRコード生成</button>
+  <div id="qrcode"></div>
+  <div id="generated-url-container">
+    <p id="generated-url"></p>
+    <button id="copy-button" data-clipboard-target="#generated-url" style="display:none;">クリップボードにコピー</button>
+  </div>
+
+  <script src="/Web_App/qr/rinu.cf.js"></script>
+</body>
+</html>
