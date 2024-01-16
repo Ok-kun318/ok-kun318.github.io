@@ -54,11 +54,20 @@
   </tbody>
 </table>
 
-<button onclick="promptForDiaryEntry()">追加</button>
+<button onclick="openInputDialog()">追加</button>
 <button onclick="downloadCSV()">CSVとして保存</button>
 <input type="file" id="fileInput" accept=".csv" onchange="uploadCSV(event)">
 
 <script src="/Web_App/1_Line_Diary/index.js"></script>
+
+<div id="inputModal" class="modal">
+  <div class="modal-content">
+    <span class="close" onclick="closeInputDialog()">&times;</span>
+    <label for="diaryInput">1行日記を入力してください:</label>
+    <input type="text" id="diaryInput">
+    <button onclick="addDiaryEntryFromInput()">追加</button>
+  </div>
+</div>
 
 </body>
 </html>

@@ -97,3 +97,20 @@ const diaryEntries = JSON.parse(localStorage.getItem('diaryEntries')) || [];
     const options = { year: 'numeric', month: '2-digit', day: '2-digit', weekday: 'short' };
     return new Date(dateString).toLocaleDateString('ja-JP', options);
 }
+function openInputDialog() {
+  document.getElementById('inputModal').style.display = 'block';
+}
+
+function closeInputDialog() {
+  document.getElementById('inputModal').style.display = 'none';
+}
+
+function addDiaryEntryFromInput() {
+  const text = document.getElementById('diaryInput').value;
+  if (text.trim() !== '') {
+    addDiaryEntry(text);
+    closeInputDialog();
+  } else {
+    alert('入力が空白です。1行日記を入力してください。');
+  }
+}

@@ -6,6 +6,12 @@ var qrcode = null;
       var qrcodeElement = document.getElementById("qrcode");
       var generatedUrlElement = document.getElementById("generated-url");
       var copyButton = document.getElementById("copy-button");
+      const SelectElement1 = document.querySelector('body');
+      const SelectStyle1 = getComputedStyle(SelectElement1);
+      const StyleValue1 = String(SelectStyle1.getPropertyValue('--textcolor')).trim();
+      const SelectElement2 = document.querySelector('body');
+      const SelectStyle2 = getComputedStyle(SelectElement2);
+      const StyleValue2 = String(SelectStyle2.getPropertyValue('--bgcolor')).trim();
 
       if (qrcode !== null) {
         qrcodeElement.innerHTML = "";
