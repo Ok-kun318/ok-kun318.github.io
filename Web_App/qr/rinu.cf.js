@@ -1,5 +1,38 @@
 var qrcode = null;
 
+document.addEventListener('DOMContentLoaded', function () {
+  var clipboard = new ClipboardJS('#copyButton');
+});
+
+function copyToClipboard() {
+  var generatedUrlElement = document.getElementById("generated-url");
+  var generatedUrl = generatedUrlElement.querySelector('a').getAttribute('href');
+
+  var textArea = document.createElement("textarea");
+  textArea.value = generatedUrl;
+
+  // Avoid scrolling to bottom
+  textArea.style.top = "0";
+  textArea.style.left = "0";
+  textArea.style.position = "fixed";
+
+  document.body.appendChild(textArea);
+  textArea.focus();
+  textArea.select();
+
+  try {
+    var successful = document.execCommand('copy');
+    var msg = successful ? 'コピーが成功しました' : 'コピーに失敗しました';
+    console.log(msg);
+  } catch (err) {
+    console.error('コピーに失敗しました', err);
+  }
+
+  document.body.removeChild(textArea);
+}
+
+
+
     function generateQRCode() {
       var textInput = document.getElementById("text-input").value;
       var useShortenAPI = document.getElementById("useShortenAPI").checked;
@@ -27,8 +60,7 @@ var qrcode = null;
             colorLight : StyleValue2
           });
 
-          generatedUrlElement.innerHTML = "<a href='" + shortURL + "' target='_blank'>" + shortURL + "</a>";
-          copyButton.style.display = "inline-block";
+          generatedUrlElement.innerHTML = "<a href='" + shortURL + "' target='_blank' id='kekka'>" + shortURL + "</a>";
         }, function () {
           qrcode = new QRCode(qrcodeElement, {
             text: textInput,
@@ -37,8 +69,7 @@ var qrcode = null;
             colorDark : StyleValue1,
             colorLight : StyleValue2
           });
-          generatedUrlElement.innerHTML = "<a href='" + textInput + "' target='_blank'>" + textInput + "</a>";
-          copyButton.style.display = "inline-block";
+          generatedUrlElement.innerHTML = "<a href='" + textInput + "' target='_blank' id='kekka'>" + textInput + "</a>";
         });
       } else {
         qrcode = new QRCode(qrcodeElement, {
@@ -49,18 +80,9 @@ var qrcode = null;
           colorLight : StyleValue2
         });
 
-        generatedUrlElement.innerHTML = "<a href='" + textInput + "' target='_blank'>" + textInput + "</a>";
-        copyButton.style.display = "inline-block";
+        generatedUrlElement.innerHTML = "<a href='" + textInput + "' target='_blank' id='kekka'>" + textInput + "</a>";
       }
     }
-
-    var copyButton = document.getElementById("copy-button");
-    new ClipboardJS(copyButton);
-    
-    copyButton.addEventListener('click', function () {
-      alert('クリップボードにコピーしました！');
-    });    
-
     function shortenURL(url, successCallback, errorCallback) {
 
       var apiEndpoint = "https://api.activetk.jp/urlmin/set?url=" + encodeURIComponent(url);
