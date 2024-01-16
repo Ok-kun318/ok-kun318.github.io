@@ -23,9 +23,9 @@ function copyToClipboard() {
   try {
     var successful = document.execCommand('copy');
     var msg = successful ? 'コピーが成功しました' : 'コピーに失敗しました';
-    console.log(msg);
+    alert(msg);
   } catch (err) {
-    console.error('コピーに失敗しました', err);
+    alert('コピーに失敗しました', err);
   }
 
   document.body.removeChild(textArea);
