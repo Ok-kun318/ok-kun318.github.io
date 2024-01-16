@@ -56,10 +56,10 @@ var qrcode = null;
 
     var copyButton = document.getElementById("copy-button");
     new ClipboardJS(copyButton);
-
+    
     copyButton.addEventListener('click', function () {
       alert('クリップボードにコピーしました！');
-    });
+    });    
 
     function shortenURL(url, successCallback, errorCallback) {
 
