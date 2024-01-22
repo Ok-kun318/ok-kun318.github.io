@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OpenMediaVaultをRaspberryPiにインストールしてみる</title>
+    <link rel="styleSheet" href="/all/css/lida.css">
+    <link rel="icon" href="/all/icon/image.png">
+</head>
+<body>
+    <nav>
+        <ul class="nav">
+            <li><a href="/">HOME</a></li>
+            <li><a href="/Profile/">プロフィール</a></li>
+            <li><a href="/blog/">ブログ</a></li>
+            <li><a href="/Web_App/">Web App</a></li>
+            <li><a href="/scfura/">フラッシュ計算</a></li>
+            <li><a href="https://github.com/Ok-kun318"><div class="imgbg"><img class="img" src="/all/github/github-mark-white.png"></div></a></li>
+        </ul>
+    </nav>
+
+    <h1>OpenMediaVaultをRaspberryPiにインストールしてみる</h1>
+    <h1>1.OSの書き込み</h1>
+    <p>まずOSを書き込みます</p>
+    <img src="img/1.png" alt="Image 1">
+    <p>OSはRaspberry Pi OS Lite(64-bit)を書き込みます</p>
+    <img src="img/2.png" alt="Image2">
+    <p>ここで設定を編集するを押します</p>
+    <img src="img/3.png" alt="Image 3">
+    <br>
+    <img src="img/4.png" alt="Image 3">
+    <p>設定をします</p>
+    <img src="img/2.png" alt="Image 2">
+    <p>保存を押して「はい」を押します</p>
+    <p>書き込みが終わったらRaspberry Piに刺して起動します</p>
+    <img src="img/5.png" alt="Image 5" width="1000px">
+    <p>SSHで接続します</p>
+    <p><b>wget -O - https://github.com/OpenMediaVault-Plugin-Developers/installScript/raw/master/install | sudo bash</b></p>
+    <p>とコマンドに打ち15分ぐらい待ちます(途中で再起動します)</p>
+    <img src="img/6.png" alt="Image 6" width="1000px">
+    <h1>2.IPの固定</h1>
+    <p><b>sudo nano /etc/systemd/network/99-default.link</b></p>
+    <p>とコマンドに打ち</p>
+    <img src="img/7.png" alt="Image 7" width="1000px">
+    <p><b>[Network]<br>Address=固定したいIPアドレス/24<br>Gateway=192.168.0.1<br>DNS=192.168.0.1</b></p>
+    <p>と入力して</p>
+    <p>Ctrl+X → Y → Alt+D → Enter</p>
+    <p>終了して</p>
+    <p><b>sudo systemctl restart systemd-networkd</b></p>
+    <p>でネットワークを再起動</p>
+    <h1>3.Web UIにアクセス</h1>
+    <p>Raspberry PiのIPまたはホスト名またはホスト名.localをアドレスバーに打ち込む<br>例<br>192.168.0.8<br><a href="http://NAS">http://NAS</a><br><a href="http://NAS.local">http://NAS.local</a></p>
+    <img src="img/8.png" alt="Image 8" width="1000px">
+    <p><b>ユーザー名:adminパスワード:openmediavault</b>を入力</p>
+    <h3>日本語化</h3>
+    <video src="img/9.mp4" controls playsinline width="1000px"></video>
+    <h3>時刻の設定</h3>
+    <p>システム > 時刻と日付</p>
+    <img src="img/29.png" alt="Image 29" width="1000px">
+    <p>時刻サーバをntp.nict.jpにする</p>
+    <img src="img/30.png" alt="Image 30" width="1000px">
+    <p>変更を保存</p>
+    <h3>ディスクのマウント</h3>
+    <p>ストーレージ > ディスク</p>
+    <img src="img/10.png" alt="Image 10" width="1000px">
+    <br>
+    <img src="img/11.png" alt="Image 11" width="1000px">
+    <p>マウントしたいストレージを選択</p>
+    <img src="img/12.png" alt="Image 12" width="1000px">
+    <p>消しゴムマークをクリック</p>
+    <img src="img/13.png" alt="Image 13" width="1000px">
+    <p>クイックまたはセキュアを選択</p>
+    <img src="img/14.png" alt="Image 14" width="1000px">
+    <br>
+    <img src="img/15.png" alt="Image 15" width="1000px">
+    <p>ストーレージ > ファイルシステム</p>
+    <img src="img/16.png" alt="Image 16" width="1000px">
+    <p>+マークをクリック、EXT4を選択</p>
+    <img src="img/17.png" alt="Image 17" width="1000px">
+    <p>さっきワイプしたデバイスを選択</p>
+    <img src="img/18.png" alt="Image 18" width="1000px">
+    <br>
+    <img src="img/19.png" alt="Image 19" width="1000px">
+    <p>作成したファイルシステムを選択</p>
+    <img src="img/20.png" alt="Image 20" width="1000px">
+    <p>変更を適用を押す</p>
+    <img src="img/21.png" alt="Image 21" width="1000px">
+    <p>ストーレージ > 共有フォルダ +マークをクリック</p>
+    <img src="img/22.png" alt="Image 22" width="1000px">
+    <p>名前を入力</p>
+    <img src="img/23.png" alt="Image 23" width="1000px">
+    <p>変更を保存</p>
+    <h3>Sambaの設定</h3>
+    <p>サービス > SMB/CIFS</p>
+    <img src="img/24.png" alt="Image 24" width="1000px">
+    <p>サービス > SMB/CIFS > 共有</p>
+    <img src="img/25.png" alt="Image 25" width="1000px">
+    <p>+マークをクリック</p>
+    <img src="img/26.png" alt="Image 26" width="1000px">
+    <p>有効にチェック、共有フォルダを選択、保存</p>
+    <img src="img/27.png" alt="Image 27" width="1000px">
+    <p>サービス > SMB/CIFS > 設定</p>
+    <p>有効にチェック、時刻サーバはお好みで、保存</p>
+    <img src="img/28.png" alt="Image 28" width="1000px">
+    <h3>アクセス用ユーザーの追加</h3>
+    <p>ユーザーマネジメント > ユーザー</p>
+    <img src="img/31.png" alt="Image 31" width="1000px">
+    <br>
+    <img src="img/32.png" alt="Image 32" width="1000px">
+    <p>+マークをクリック、作成</p>
+    <img src="img/33.png" alt="Image 33" width="1000px">
+    <p>ユーザー名とパスワードを設定、ユーザーをグループusersに追加、保存</p>
+    <img src="img/34.png" alt="Image 34" width="1000px">
+    <h3>Sambaに接続</h3>
+    <p>エクスプローラーのPCで右クリック > ネットワークの場所を追加</p>
+    <img src="img/36.png" alt="Image 36" width="1000px">
+    <br>
+    <img src="img/37.png" alt="Image 37" width="1000px">
+    <p>「\\Raspberry Piのホスト名\共有フォルダの名前」を入力</p>
+    <img src="img/38.png" alt="Image 38" width="1000px">
+    <p>さっき作成したアカウントを入力</p>
+    <img src="img/39.png" alt="Image 39" width="1000px">
+    <p>名前を入力</p>
+    <img src="img/41.png" alt="Image 41" width="1000px">
+    <br>
+    <img src="img/42.png" alt="Image 42" width="1000px">
+    <p>認識した</p>
+    <img src="img/43.png" alt="Image 43" width="1000px">
+</body>
+</html>
