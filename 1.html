@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>自己紹介</title>
+    <link rel="stylesheet" href="/all/css/lida_lite.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Zen+Kurenaido&display=swap" rel="stylesheet">
+    <style>
+        .zen-k {
+            font-family: Zen Kurenaido;
+                }
+    </style>
+</head>
+<body>
+    <h1 class="zen-k">自己紹介</h1>
+    <p>↑これはHTMLで書いてるよ</p>
+    <div id="now"></div>
+    <span id="view_clock"></span>
+
+<script type="text/javascript">
+timerID = setInterval('clock()',500);
+
+function clock() {
+	document.getElementById("view_clock").innerHTML = getNow();
+}
+
+function getNow() {
+	var now = new Date();
+	var year = now.getFullYear();
+	var mon = now.getMonth()+1;
+	var day = now.getDate();
+	var hour = now.getHours();
+	var min = now.getMinutes();
+	var sec = now.getSeconds();
+
+	var s = year + "年" + mon + "月" + day + "日" + hour + "時" + min + "分" + sec + "秒"; 
+	return s;
+}
+</script>
+<p style="color: rgb(37, 101, 196);">↑これはJavaScriptで書いてるよ</p>
+<p>↑これの色はCSSで変えているよ</p>
+<a href="/tetorisu.html">6行テトリス</a>←Click now
+</body>
+
+</html>
