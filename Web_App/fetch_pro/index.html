@@ -61,6 +61,7 @@
                 const originalHref = link.href;
                 const newHref = `https://ok-kun318.github.io/Web_App/fetch_pro/index.html?u=${encodeURIComponent(originalHref)}`;
                 link.href = newHref;  // <a>タグのhrefを新しいURLに置き換え
+                link.target = '_self';  // クリック時に現在のiframe内でページを更新
               });
             };
           })
