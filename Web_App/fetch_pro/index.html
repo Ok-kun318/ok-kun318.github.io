@@ -42,7 +42,7 @@
       const url = getUrlParameter('u');  // URLパラメーター「u」からURLを取得
 
       if (url) {
-        const proxyUrl = 'https://cors-anywhere.herokuapp.com/';
+        const proxyUrl = 'https://cros-any.onrender.com/';
 
         fetch(proxyUrl + url)
           .then(response => response.text())  // データをテキストとして取得
@@ -59,9 +59,19 @@
               links.forEach(link => {
                 // 元のリンクを変更
                 const originalHref = link.href;
-                const newHref = `https://ok-kun318.github.io/Web_App/fetch_pro/index.html?u=${encodeURIComponent(originalHref)}`;
+                
+                // 相対パスを絶対パスに変換
+                const absoluteHref = new URL(originalHref, window.location.href).href;
+
+                // 変更後のリンクを設定
+                const newHref = `https://ok-kun318.github.io/Web_App/fetch_pro/index.html?u=${encodeURIComponent(absoluteHref)}`;
                 link.href = newHref;  // <a>タグのhrefを新しいURLに置き換え
-                link.target = '_self';  // クリック時に現在のiframe内でページを更新
+
+                // <a>タグのクリックイベントを修正して、リンクを同じiframe内で開く
+                link.addEventListener('click', function(event) {
+                  event.preventDefault();  // デフォルトのリンク動作を停止
+                  iframe.srcdoc = `<html><body><a href="${newHref}" target="_self">Redirecting...</a></body></html>`;  // 新しいURLをiframeにロード
+                });
               });
             };
           })
