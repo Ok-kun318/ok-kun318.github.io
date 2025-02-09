@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ParaHP - ビューアー</title>
+    <script src="https://cdn.jsdelivr.net/npm/lz-string@1.4.4/libs/lz-string.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pako/2.1.0/pako.min.js"></script>
+    <script src="compression.js"></script>
+    <style>
+        body {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            font-family: sans-serif;
+        }
+        .error {
+            color: #ff4444;
+            padding: 20px;
+            border: 1px solid #ffcdd2;
+            border-radius: 4px;
+            background: #ffebee;
+        }
+        .create-link {
+            margin-top: 20px;
+            padding: 10px;
+            background: #f5f5f5;
+            border-radius: 4px;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+    <div id="content">
+        <!-- コンテンツがここに動的に生成されます -->
+    </div>
+
+    <div class="create-link">
+        <a href="generator.html">Powered By ParaHP</a>
+    </div>
+
+    <script>
+        window.onload = function() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const compressed = urlParams.get('d');
+            const method = urlParams.get('m');
+            
+            if (compressed && method && decompressors[method]) {
+                try {
+                    const decompressed = decompressors[method](compressed);
+                    const data = JSON.parse(decompressed);
+                    renderContent(data);
+                } catch (e) {
+                    showError('データの展開に失敗しました');
+                    console.error('展開エラー:', e);
+                }
+            } else {
+                // 非圧縮モードのパラメータをチェック
+                const data = {
+                    title: urlParams.get('title'),
+                    body: urlParams.get('body'),
+                    bgcolor: urlParams.get('bgcolor')
+                };
+
+                if (data.title || data.body) {
+                    renderContent(data, true);
+                } else {
+                    showError('パラメータが見つかりません');
+                }
+            }
+        }
+
+        function renderContent(data, needsDecode = false) {
+            document.title = needsDecode ? 
+                decodeURIComponent(data.title || 'Untitled') : 
+                (data.title || 'Untitled');
+            
+            const content = document.getElementById('content');
+            
+            // カスタムCSSの適用
+            if (data.css) {
+                const styleElement = document.createElement('style');
+                styleElement.textContent = needsDecode ? 
+                    decodeURIComponent(data.css) : data.css;
+                document.head.appendChild(styleElement);
+            }
+            
+            if (data.bgcolor) {
+                document.body.style.backgroundColor = needsDecode ? 
+                    decodeURIComponent(data.bgcolor) : data.bgcolor;
+            }
+            if (data.title) {
+                content.innerHTML += `<h1>${needsDecode ? 
+                    decodeURIComponent(data.title) : data.title}</h1>`;
+            }
+            if (data.body) {
+                content.innerHTML += needsDecode ? 
+                    decodeURIComponent(data.body) : data.body;
+            }
+        }
+
+        function showError(message) {
+            document.getElementById('content').innerHTML = `
+                <div class="error">
+                    <p>エラー: ${message}</p>
+                </div>
+            `;
+        }
+    </script>
+</body>
+</html> 
