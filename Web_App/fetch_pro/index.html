@@ -49,7 +49,7 @@
       const url = getUrlParameter('u');  // URLパラメーター「u」からURLを取得
 
       if (url) {
-        const proxyUrl = 'https://cors-anywhere.herokuapp.com/';
+        const proxyUrl = 'https://cros-any.onrender.com/';
 
         fetch(proxyUrl + url)
           .then(response => response.text())  // データをテキストとして取得
@@ -71,6 +71,9 @@
                 // 新しいURLに書き換え
                 const newHref = `https://ok-kun318.github.io/Web_App/fetch_pro/index.html?u=${encodeURIComponent(absoluteHref)}`;
                 link.href = newHref;  // <a>タグのhrefを新しいURLに置き換え
+
+                // 新しいタブで開くようにする
+                link.target = "_blank";
               });
             };
           })
