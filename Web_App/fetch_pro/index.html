@@ -27,7 +27,7 @@
 <body>
 
   <div class="container">
-    <iframe src="iframecontent.html"></iframe>
+    <iframe id="myIframe" src="iframecontent.html"></iframe>
   </div>
 
   <script>
@@ -50,6 +50,19 @@
             // 取得したデータをiframeに表示
             const iframe = document.querySelector('iframe');
             iframe.srcdoc = data;  // 取得したHTMLをiframeに表示
+
+            // iframeの読み込み完了後にリンクを変更
+            iframe.onload = function() {
+              const iframeDocument = iframe.contentDocument || iframe.contentWindow.document;
+              const links = iframeDocument.querySelectorAll('a');  // iframe内の全ての<a>タグを取得
+
+              links.forEach(link => {
+                // 元のリンクを変更
+                const originalHref = link.href;
+                const newHref = `https://ok-kun318.github.io/Web_App/fetch_pro/index.html?u=${encodeURIComponent(originalHref)}`;
+                link.href = newHref;  // <a>タグのhrefを新しいURLに置き換え
+              });
+            };
           })
           .catch(error => {
             console.error('Error fetching data: ', error);
