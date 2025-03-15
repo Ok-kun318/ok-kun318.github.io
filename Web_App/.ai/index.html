@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="ja">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AIchat</title>
+</head>
+
+<body>
+    <div id="resultaudio"></div>
+    <div id="result"></div>
+
+    <script>
+        let speak = encodeURIComponent("こんにちは、私はAIです。");
+
+        async function callApi(text) {
+            const res = await fetch(`https://api.tts.quest/v3/voicevox/synthesis?speaker=3&text=${text}`);
+            const data = await res.json(); // JSONデータに変換
+
+            let result = document.getElementById('resultaudio');
+
+            if (res.status === 200 && data.success && data.mp3StreamingUrl) {
+                result.innerHTML = `<audio src="${data.mp3StreamingUrl}" autoplay controls></audio>`;
+            } else {
+                let errorMessage = `音声合成に失敗しました。<br>`;
+                if (data.retryAfter) {
+                    errorMessage += `再試行までの待機時間: ${data.retryAfter} 秒`;
+                }
+                result.innerHTML = errorMessage;
+                console.error('エラー:', data);
+            }
+        }
+        let url_string = window.location.href;
+    // 文字列としてのURLをURLオブジェクトに変換する。
+    let url = new URL(url_string);
+    // URLオブジェクトのsearchParamsのget関数でIDがdの値を取得する。
+    let data=url.searchParams.get("key");
+    const API_KEY = data; // ここにAPIキーをセット
+
+async function sendToGemini(text) {
+    const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${API_KEY}`;
+
+    const payload = {
+        system_instruction: {
+            parts: [
+                { text: `なるべく特殊記号を使わないようにしてください。見やすさのために<br>や<p style="color: red;"></p>などのHTMLタグを使用してください。文字数は100文字以内で応答してください。` }
+            ]
+        },
+        contents: [
+            {
+                parts: [
+                    { text: text }
+                ]
+            }
+        ]
+    };
+
+    try {
+        const res = await fetch(url, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(payload)
+        });
+
+        if (!res.ok) {
+            throw new Error(`HTTP error! Status: ${res.status}`);
+        }
+
+        const data = await res.json();
+        const responseText = data?.candidates?.[0]?.content?.parts?.[0]?.text;
+        return responseText || 'No response from Gemini';
+    } catch (error) {
+        console.error('Error:', error);
+        return null;
+    }
+}
+
+let text=url.searchParams.get("text");
+if (text !== null){
+    sendToGemini(text).then(response => {
+    console.log("Geminiからの応答:", response);
+    let result = document.getElementById('result');
+        result.innerHTML = response;
+    if (response !== null){
+        callApi(response);
+    }
+    else{
+        console.error("Geminiからの応答がnullです。");
+    }
+});
+} else {
+    console.error("textがnullです。");
+}
+
+
+    </script>
+    <p style="color: red;"></p>
+</body>
+</html>
