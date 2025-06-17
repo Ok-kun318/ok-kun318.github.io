@@ -22,18 +22,25 @@
             text-align: left;
             flex-shrink: 0;
         }
-        #editor, #preview {
+        #main-area {
+            flex: 1;
+            display: flex;
+            flex-direction: row; /* たて分割（左右分割） */
             width: 100vw;
+            height: 100%;
+        }
+        #editor, #preview {
+            height: 100%;
             border: none;
         }
         #editor {
-            height: 48vh;
+            width: 50vw;
             resize: none;
             font-size: 1em;
             box-sizing: border-box;
         }
         #preview {
-            height: 48vh;
+            width: 50vw;
             background: #fff;
             box-sizing: border-box;
         }
@@ -48,7 +55,8 @@
             <input type="file" id="upload" onchange="upload()">
             <button onclick="togglePreviewOnly()">プレビューのみ表示</button>
         </div>
-        <textarea id="editor" oninput="updatePreview()">
+        <div id="main-area">
+            <textarea id="editor" oninput="updatePreview()">
 &lt;!DOCTYPE html&gt;
 &lt;html lang=&quot;ja&quot;&gt;
 &lt;head&gt;
@@ -65,8 +73,9 @@
     &lt;h6&gt;h6&lt;/h6&gt;
 &lt;/body&gt;
 &lt;/html&gt;
-        </textarea>
-        <iframe id="preview"></iframe>
+            </textarea>
+            <iframe id="preview"></iframe>
+        </div>
     </div>
     <script src="/Web_App/HTML_Editor/index.js"></script>
 </body>
