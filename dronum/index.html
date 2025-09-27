@@ -1,0 +1,630 @@
+<!DOCTYPE html>
+<html lang="ja">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dopop The Number</title>
+    <style>
+        body {
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin: 0;
+            font-family: Arial, sans-serif;
+        }
+
+        .game-container {
+            display: flex;
+            flex-direction: row;
+            align-items: center;
+            gap: 40px;
+        }
+
+        .game-board {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 20px;
+        }
+
+        .score-container {
+            display: flex;
+            gap: 40px;
+            font-size: 18px;
+            font-weight: bold;
+        }
+
+        .score {
+            color: #333;
+        }
+
+        .high-score {
+            color: #e74c3c;
+        }
+
+        .multiplier {
+            color: #ff6b35;
+            font-weight: bold;
+        }
+
+        canvas {
+            border: 1px solid aqua;
+            max-width: 100%;
+            max-height: 100%;
+        }
+
+        .game-over {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(0, 0, 0, 0.8);
+            color: white;
+            padding: 20px;
+            border-radius: 10px;
+            text-align: center;
+            font-size: 24px;
+            display: none;
+        }
+
+        .next-piece {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 10px;
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 10px;
+            border: 2px solid #dee2e6;
+        }
+
+        .next-piece h3 {
+            margin: 0;
+            color: #495057;
+            font-size: 18px;
+        }
+
+        .next-piece-display {
+            width: 100px;
+            height: 100px;
+            background: skyblue;
+            border-radius: 8px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 24px;
+            font-weight: bold;
+            color: black;
+            border: 2px solid #6c757d;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="game-container">
+        <div class="next-piece">
+            <h3>次の数字</h3>
+            <div class="next-piece-display" id="nextPiece">?</div>
+        </div>
+        <div class="game-board">
+            <div class="score-container">
+                <div class="score">スコア: <span id="score">0</span></div>
+                <div class="high-score">最高スコア: <span id="highScore">0</span></div>
+                <div class="multiplier">倍率: <span id="multiplier">1.0</span>x</div>
+            </div>
+            <canvas id="myCanvas"></canvas>
+            <div class="game-over" id="gameOver">
+                ゲームオーバー！<br>
+                スコア: <span id="finalScore">0</span><br>
+                <button onclick="restartGame()" style="margin-top: 10px; padding: 10px 20px; font-size: 16px;">リスタート</button>
+            </div>
+        </div>
+    </div>
+    <script>
+        let bord = [
+            [0, 0, 0, 0, 0, 0, 0], // 落下用の行
+            [0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0],
+        ];
+        let ram = 0;
+        let i1 = 0;
+        while (i1 <= 6) {
+            ram = 2 ** (Math.floor(Math.random() * 5) + 1);
+            console.log(ram);
+            if (i1 !== 0) {
+                while (ram == bord[6][i1 - 1]) {
+                    ram = 2 ** (Math.floor(Math.random() * 5) + 1);
+                }
+            }
+            bord[6][i1] = ram;
+            i1++;
+        }
+
+        let fallingCol = 3; // 落下数字の現在の列
+        let fallingNum = 0; // 落下数字
+        let nextNum = 0; // 次の数字
+        let score = 0; // スコア
+        let highScore = localStorage.getItem('highScore') || 0; // 最高スコア
+        let gameOver = false; // ゲームオーバーフラグ
+        let chainCount = 0; // 連鎖数
+        let isInChain = false; // 連鎖中かどうか
+
+        const cellSize = 100;
+        const cellMargin = 10;
+        const rows = bord.length;
+        const cols = bord[0].length;
+        const boardWidth = cols * cellSize;
+        const boardHeight = rows * cellSize;
+
+        // canvasサイズを盤面に合わせて設定
+        const canvas = document.getElementById('myCanvas');
+        canvas.width = boardWidth + 100;
+        canvas.height = boardHeight + 100;
+
+        // スコア計算関数
+        function calculateScore(value) {
+            // 2の何乗かを求める
+            let power = 0;
+            let temp = value;
+            while (temp > 1) {
+                temp = temp / 2;
+                power++;
+            }
+            return power * 5;
+        }
+
+        // スコア更新関数
+        function updateScore(value) {
+            // 連鎖ボーナスを計算
+            let multiplier = 1.0;
+            if (isInChain) {
+                multiplier = 1.0 + (chainCount * 0.2); // 1連鎖1.2x, 2連鎖1.4x
+            }
+            
+            let baseScore = calculateScore(value);
+            let bonusScore = Math.floor(baseScore * multiplier);
+            
+            score += bonusScore;
+            document.getElementById('score').textContent = score;
+            
+            // 倍率表示を更新
+            document.getElementById('multiplier').textContent = multiplier.toFixed(1);
+            
+            // 連鎖ボーナス表示（デバッグ用）
+            if (isInChain && chainCount > 0) {
+                console.log(`連鎖${chainCount}: ${baseScore} × ${multiplier.toFixed(1)} = ${bonusScore}`);
+            }
+            
+            // 最高スコア更新
+            if (score > highScore) {
+                highScore = score;
+                localStorage.setItem('highScore', highScore);
+                document.getElementById('highScore').textContent = highScore;
+            }
+        }
+
+        // 次の数字を生成する関数
+        function generateNextNum() {
+            nextNum = 2 ** (Math.floor(Math.random() * 5) + 1);
+            document.getElementById('nextPiece').textContent = nextNum;
+        }
+
+        // ゲームオーバー判定
+        function checkGameOver() {
+            // 最初の行と次の行に数字があるかチェック
+            for (let col = 0; col < cols; col++) {
+                if (bord[0][col] !== 0 || bord[1][col] !== 0) {
+                    return true;
+                }
+            }
+            return false;
+        }
+
+        // ゲームオーバー処理
+        function endGame() {
+            gameOver = true;
+            document.getElementById('finalScore').textContent = score;
+            document.getElementById('gameOver').style.display = 'block';
+        }
+
+        // リスタート関数
+        function restartGame() {
+            // ボードをリセット
+            bord = [
+                [0, 0, 0, 0, 0, 0, 0],
+                [0, 0, 0, 0, 0, 0, 0],
+                [0, 0, 0, 0, 0, 0, 0],
+                [0, 0, 0, 0, 0, 0, 0],
+                [0, 0, 0, 0, 0, 0, 0],
+                [0, 0, 0, 0, 0, 0, 0],
+                [0, 0, 0, 0, 0, 0, 0],
+            ];
+            
+            // 最下段に初期数字を設定
+            for (let i = 0; i <= 6; i++) {
+                ram = 2 ** (Math.floor(Math.random() * 5) + 1);
+                if (i !== 0) {
+                    while (ram == bord[6][i - 1]) {
+                        ram = 2 ** (Math.floor(Math.random() * 5) + 1);
+                    }
+                }
+                bord[6][i] = ram;
+            }
+            
+            // 変数をリセット
+            fallingCol = 3;
+            fallingNum = 0;
+            nextNum = 0;
+            score = 0;
+            gameOver = false;
+            chainCount = 0;
+            isInChain = false;
+            
+            // UIをリセット
+            document.getElementById('score').textContent = '0';
+            document.getElementById('multiplier').textContent = '1.0';
+            document.getElementById('gameOver').style.display = 'none';
+            
+            // ゲーム開始
+            play();
+        }
+
+        function draw() {
+            const ctx = canvas.getContext('2d');
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            // 盤面をcanvas中央に配置
+            const offsetX = (canvas.width - boardWidth) / 2;
+            const offsetY = (canvas.height - boardHeight) / 2;
+
+            // // 落下行（最上段）の背景を通常のグレーに変更
+            // ctx.fillStyle = 'rgba(235, 235, 235, 0.595)';
+            // ctx.fillRect(
+            //     offsetX,
+            //     offsetY,
+            //     boardWidth,
+            //     cellSize - cellMargin
+            // );
+
+            // ゲームオーバーライン（最初の行と次の行の間に赤いライン）
+            ctx.strokeStyle = 'red';
+            ctx.lineWidth = 4;
+            ctx.beginPath();
+            ctx.moveTo(offsetX, offsetY + cellSize * 2 - cellMargin + 2);
+            ctx.lineTo(offsetX + boardWidth, offsetY + cellSize * 2 - cellMargin + 2);
+            ctx.stroke();
+
+            for (let i = 0; i < rows; i++) {
+                for (let j = 0; j < cols; j++) {
+                    // ブロック枠
+                    ctx.fillStyle = bord[i][j] !== 0 ? 'skyblue' : 'rgba(235, 235, 235, 0.595)';
+                    ctx.fillRect(
+                        offsetX + j * cellSize,
+                        offsetY + i * cellSize,
+                        cellSize - cellMargin,
+                        cellSize - cellMargin
+                    );
+
+                    // 数字
+                    if (bord[i][j] !== 0) {
+                        ctx.fillStyle = 'black';
+                        ctx.font = '30px Arial';
+                        ctx.textAlign = 'center';
+                        ctx.textBaseline = 'middle';
+                        ctx.fillText(
+                            bord[i][j],
+                            offsetX + j * cellSize + (cellSize - cellMargin) / 2,
+                            offsetY + i * cellSize + (cellSize - cellMargin) / 2
+                        );
+                    }
+                }
+            }
+
+            window.requestAnimationFrame(draw);
+        }
+        draw();
+        
+        function play() {
+            fallingCol = 3;
+            // 次の数字を現在の落下数字に設定
+            if (nextNum === 0) {
+                fallingNum = 2 ** (Math.floor(Math.random() * 5) + 1);
+            } else {
+                fallingNum = nextNum;
+            }
+            // 落下行をクリア
+            for (let i = 0; i < bord[0].length; i++) {
+                bord[0][i] = 0;
+            }
+            // 落下中の数字を設定
+            bord[0][fallingCol] = fallingNum;
+            // 次の数字を生成
+            generateNextNum();
+        }
+
+        // アニメーション用変数
+        let animating = false;
+        let animationData = null;
+
+        // アニメーション付き落下（framesを20にして遅くする）
+        function animateFall(fromRow, toRow, col, value, callback) {
+            animating = true;
+            const frames = 16; // ←ここを増やすと遅くなる
+            let frame = 0;
+            function step() {
+                draw();
+                const ctx = canvas.getContext('2d');
+                const offsetX = (canvas.width - boardWidth) / 2;
+                const offsetY = (canvas.height - boardHeight) / 2;
+                const y1 = offsetY + fromRow * cellSize;
+                const y2 = offsetY + toRow * cellSize;
+                const x = offsetX + col * cellSize;
+                const y = y1 + (y2 - y1) * (frame / frames);
+
+                // 落下中のブロック
+                ctx.save();
+                ctx.fillStyle = 'skyblue';
+                ctx.fillRect(x, y, cellSize - cellMargin, cellSize - cellMargin);
+                ctx.fillStyle = 'black';
+                ctx.font = '30px Arial';
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                ctx.fillText(value, x + (cellSize - cellMargin) / 2, y + (cellSize - cellMargin) / 2);
+                ctx.restore();
+
+                frame++;
+                if (frame <= frames) {
+                    requestAnimationFrame(step);
+                } else {
+                    animating = false;
+                    callback();
+                }
+            }
+            step();
+        }
+
+        // 合体アニメーション（framesを16にして遅くする）
+        function animateMerge(row, col, value, callback) {
+            animating = true;
+            const frames = 19;
+            let frame = 0;
+            function step() {
+                draw();
+                const ctx = canvas.getContext('2d');
+                const offsetX = (canvas.width - boardWidth) / 2;
+                const offsetY = (canvas.height - boardHeight) / 2;
+                const x = offsetX + col * cellSize;
+                const y = offsetY + row * cellSize;
+                const scale = 1 + 0.2 * Math.sin((Math.PI * frame) / frames);
+
+                ctx.save();
+                ctx.translate(x + (cellSize - cellMargin) / 2, y + (cellSize - cellMargin) / 2);
+                ctx.scale(scale, scale);
+                ctx.fillStyle = 'orange';
+                ctx.fillRect(-(cellSize - cellMargin) / 2, -(cellSize - cellMargin) / 2, cellSize - cellMargin, cellSize - cellMargin);
+                ctx.fillStyle = 'black';
+                ctx.font = '30px Arial';
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                ctx.fillText(value, 0, 0);
+                ctx.restore();
+
+                frame++;
+                if (frame <= frames) {
+                    requestAnimationFrame(step);
+                } else {
+                    animating = false;
+                    callback();
+                }
+            }
+            step();
+        }
+
+        // キーイベント修正
+        document.addEventListener('keydown', (e) => {
+            if (gameOver) return;
+            if (fallingNum === 0 || animating) return;
+
+            if (e.key === 'ArrowLeft') {
+                if (fallingCol > 0) {
+                    bord[0][fallingCol] = 0;
+                    fallingCol--;
+                    bord[0][fallingCol] = fallingNum;
+                    draw();
+                }
+            }
+            if (e.key === 'ArrowRight') {
+                if (fallingCol < bord[0].length - 1) {
+                    bord[0][fallingCol] = 0;
+                    fallingCol++;
+                    bord[0][fallingCol] = fallingNum;
+                    draw();
+                }
+            }
+            if (e.key === 'ArrowDown' || e.key === ' ') {
+                bord[0][fallingCol] = 0;
+                let row;
+                for (row = 1; row < bord.length; row++) {
+                    if (bord[row][fallingCol] !== 0 || row === bord.length - 1) {
+                        row = row - 1;
+                        break;
+                    }
+                }
+                animateFall(0, row, fallingCol, fallingNum, () => {
+                    bord[row][fallingCol] = fallingNum;
+                    fallingNum = 0;
+
+                    // 連鎖開始
+                    chainCount = 0;
+                    isInChain = false;
+
+                    // 再帰的合体処理
+                    function recursiveMerge(row, col, callback) {
+                        let num = bord[row][col];
+                        let mergePositions = [];
+
+                        // 右
+                        if (col < cols - 1 && bord[row][col + 1] === num) {
+                            mergePositions.push([row, col + 1]);
+                        }
+                        // 左
+                        if (col > 0 && bord[row][col - 1] === num) {
+                            mergePositions.push([row, col - 1]);
+                        }
+                        // 下
+                        if (row < rows - 1 && bord[row + 1][col] === num) {
+                            mergePositions.push([row + 1, col]);
+                        }
+
+                        if (mergePositions.length > 0) {
+                            // 最初の合体は倍率アップに含めない
+                            animateMerge(row, col, num * 2, () => {
+                                bord[row][col] = num * 2;
+                                
+                                // スコアを加算（倍率なし）
+                                let baseScore = calculateScore(num * 2);
+                                score += baseScore;
+                                document.getElementById('score').textContent = score;
+                                
+                                // 最高スコア更新
+                                if (score > highScore) {
+                                    highScore = score;
+                                    localStorage.setItem('highScore', highScore);
+                                    document.getElementById('highScore').textContent = highScore;
+                                }
+                                
+                                // すべての合体された位置を0にする
+                                for (const [mr, mc] of mergePositions) {
+                                    bord[mr][mc] = 0;
+                                }
+                                
+                                // 合体後の落下処理は後で行う
+                                
+                                // 合体後、さらに合体できるか再帰チェック
+                                recursiveMerge(row, col, callback);
+                            });
+                        } else {
+                            callback(row, col);
+                        }
+                    }
+
+                    // 落下判定（下が空白なら落下を繰り返す）
+                    function afterMergeDrop(row, col) {
+                        // 合体後の落下処理を実行
+                        let hasDropped = false;
+                        
+                        // 全ての列で落下処理を行う
+                        for (let checkCol = 0; checkCol < cols; checkCol++) {
+                            // 下から上に走査し、空いているセルを見つける
+                            for (let r = rows - 1; r > 0; r--) {
+                                if (bord[r][checkCol] === 0) {
+                                    // 空セルの上にあるブロックを探す
+                                    for (let above = r - 1; above >= 0; above--) {
+                                        if (bord[above][checkCol] !== 0) {
+                                            // 空いているセルにブロックを移動
+                                            bord[r][checkCol] = bord[above][checkCol];
+                                            bord[above][checkCol] = 0;
+                                            hasDropped = true;
+                                            break;
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                        
+                        // 落下が発生した場合は、再度合体チェックを行う
+                        if (hasDropped) {
+                            // 全てのセルで合体チェック
+                            let merged = false;
+                            for (let r = 0; r < rows; r++) {
+                                for (let c = 0; c < cols; c++) {
+                                    if (bord[r][c] !== 0) {
+                                        let num = bord[r][c];
+                                        let mergePositions = [];
+                                        
+                                        // 右
+                                        if (c < cols - 1 && bord[r][c + 1] === num) {
+                                            mergePositions.push([r, c + 1]);
+                                        }
+                                        // 左
+                                        if (c > 0 && bord[r][c - 1] === num) {
+                                            mergePositions.push([r, c - 1]);
+                                        }
+                                        // 下
+                                        if (r < rows - 1 && bord[r + 1][c] === num) {
+                                            mergePositions.push([r + 1, c]);
+                                        }
+                                        
+                                        if (mergePositions.length > 0) {
+                                            merged = true;
+                                            // 連鎖開始または継続
+                                            if (!isInChain) {
+                                                isInChain = true;
+                                                chainCount = 1;
+                                            } else {
+                                                chainCount++;
+                                            }
+                                            
+                                            animateMerge(r, c, num * 2, () => {
+                                                bord[r][c] = num * 2;
+                                                // スコアを加算
+                                                updateScore(num * 2);
+                                                // 合体された位置を0にする
+                                                for (const [mr, mc] of mergePositions) {
+                                                    bord[mr][mc] = 0;
+                                                }
+                                                // 再度落下処理を実行
+                                                afterMergeDrop(r, c);
+                                            });
+                                            break;
+                                        }
+                                    }
+                                }
+                                if (merged) break;
+                            }
+                            
+                            if (!merged) {
+                                // 連鎖終了
+                                isInChain = false;
+                                // ゲームオーバー判定
+                                if (checkGameOver()) {
+                                    endGame();
+                                } else {
+                                    draw();
+                                    play();
+                                }
+                            }
+                        } else {
+                            // ゲームオーバー判定
+                            if (checkGameOver()) {
+                                endGame();
+                            } else {
+                                draw();
+                                play();
+                            }
+                        }
+                    }
+
+                    // 最初の合体チェック
+                    recursiveMerge(row, fallingCol, afterMergeDrop);
+                });
+            }
+        });
+
+        // 初期スコア表示
+        document.getElementById('highScore').textContent = highScore;
+        document.getElementById('multiplier').textContent = '1.0';
+        // 最初の次の数字を生成
+        generateNextNum();
+        play();
+    </script>
+</body>
+
+
+</html>

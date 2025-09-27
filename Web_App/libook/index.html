@@ -1,0 +1,332 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="https://cdn.jsdelivr.net/npm/@ericblade/quagga2/dist/quagga.js"></script>
+    <title>ISBNバーコード検索</title>
+    <style>
+        #container {
+            position: relative;
+            width: 400px;
+            height: 300px;
+            margin: 20px auto;
+        }
+        #canvas-overlay {
+            position: absolute;
+            top: 0; left: 0;
+            z-index: 2;
+            pointer-events: none;
+        }
+        #cropped-barcode, #cropped-redframe {
+            display: block;
+            margin: 10px auto;
+            border: 2px solid blue;
+            max-width: 400px;
+        }
+        #cropped-redframe {
+            border-color: red;
+        }
+    </style>
+</head>
+<body>
+    <input type="text" id="isbn"><input type="submit" value="検索" onclick="search()">
+    <div id="output"></div>
+    <button onclick="startScanner()">バーコード読み取り開始</button>
+    <button onclick="stopScanner()">停止</button>
+    <button onclick="toggleCamera()">カメラ切り替え</button>
+    <button onclick="debugDecodeCropped()">切り取り画像でもう一度デコード</button>
+    <button onclick="captureRedFrame()">赤枠でキャプチャしてデコード</button>
+    <div id="container"></div>
+    <script>
+        // UI要素
+        const isbn = document.getElementById("isbn");
+        const output = document.getElementById("output");
+        isbn.addEventListener("keydown", e => { if (e.key === "Enter") search(); });
+
+        // Google Books API検索
+        async function search() {
+            const url = `https://www.googleapis.com/books/v1/volumes?q=isbn:${isbn.value}`;
+            output.innerHTML = "検索中...";
+            try {
+                const response = await fetch(url);
+                if (!response.ok) throw new Error(`レスポンスステータス: ${response.status}`);
+                const result = await response.json();
+                if (!result.items || !result.items.length) {
+                    output.innerText = '書籍情報が見つかりません';
+                    return;
+                }
+                let info = result.items[0].volumeInfo;
+                let title = info.title || "";
+                let image = info.imageLinks ? info.imageLinks.thumbnail : "";
+                output.innerHTML = `${title}<br>${image ? `<img src="${image}" alt="title_image">` : ""}`;
+            } catch (error) { output.innerText = error.message; }
+        }
+
+        // グローバル変数
+        let overlayCanvas = null;
+        let currentFacingMode = "environment";
+        let videoSize = { width: 400, height: 300 };
+        let isDecoding = false;
+        let lastVideo = null;
+        let lastRedRect = null;
+
+        // バーコードスキャナ開始
+        function startScanner() {
+            Quagga.stop();
+            isDecoding = false;
+            Quagga.init({
+                inputStream: {
+                    type: "LiveStream",
+                    target: document.querySelector('#container'),
+                    constraints: {
+                        width: videoSize.width,
+                        height: videoSize.height,
+                        facingMode: currentFacingMode
+                    }
+                },
+                locator: { patchSize: "medium", halfSample: true },
+                decoder: { readers: ["ean_reader", "upc_reader"] },
+                locate: true
+            }, err => {
+                if (err) { console.log(err); return; }
+                Quagga.start();
+            });
+
+            // 検出領域可視化
+            Quagga.onProcessed(result => {
+                const container = document.getElementById('container');
+                let video = container.querySelector('video');
+                if (!video) return;
+                lastVideo = video; // キャプチャ用に保存
+
+                // 動的にvideoサイズ取得
+                const w = video.videoWidth || videoSize.width;
+                const h = video.videoHeight || videoSize.height;
+                videoSize = { width: w, height: h };
+
+                // overlay canvas生成
+                if (!overlayCanvas) {
+                    overlayCanvas = document.createElement('canvas');
+                    overlayCanvas.id = 'canvas-overlay';
+                    overlayCanvas.width = w;
+                    overlayCanvas.height = h;
+                    overlayCanvas.style.width = w + "px";
+                    overlayCanvas.style.height = h + "px";
+                    container.appendChild(overlayCanvas);
+                } else if (overlayCanvas.width !== w || overlayCanvas.height !== h) {
+                    overlayCanvas.width = w;
+                    overlayCanvas.height = h;
+                }
+                const ctx = overlayCanvas.getContext("2d");
+                ctx.clearRect(0, 0, w, h);
+
+                // 中央赤枠
+                ctx.strokeStyle = "red";
+                ctx.lineWidth = 2;
+                const rectWidth = Math.floor(w * 0.5);
+                const rectHeight = Math.floor(h * 0.33);
+                const rectX = Math.floor((w - rectWidth) / 2);
+                const rectY = Math.floor((h - rectHeight) / 2);
+                ctx.strokeRect(rectX, rectY, rectWidth, rectHeight);
+                lastRedRect = {x: rectX, y: rectY, w: rectWidth, h: rectHeight}; // キャプチャ用保存
+
+                // 緑: boxes（候補）
+                if (result && result.boxes) {
+                    ctx.strokeStyle = "lime";
+                    ctx.lineWidth = 2;
+                    result.boxes.filter(box => box !== result.box).forEach(box => {
+                        ctx.beginPath();
+                        box.forEach((point, i) => {
+                            if (i === 0) ctx.moveTo(point[0], point[1]);
+                            else ctx.lineTo(point[0], point[1]);
+                        });
+                        ctx.closePath();
+                        ctx.stroke();
+                    });
+                }
+                // 青: box（最有力）
+                if (result && result.box) {
+                    ctx.strokeStyle = "blue";
+                    ctx.lineWidth = 3;
+                    ctx.beginPath();
+                    result.box.forEach((point, i) => {
+                        if (i === 0) ctx.moveTo(point[0], point[1]);
+                        else ctx.lineTo(point[0], point[1]);
+                    });
+                    ctx.closePath();
+                    ctx.stroke();
+
+                    // 青枠領域を切り出してデコード（20%拡張）
+                    captureAndDecodeBox(video, result.box);
+                }
+            });
+        }
+
+        // 青枠領域を静止画クロップ→decodeSingle→自動入力
+        function captureAndDecodeBox(video, box) {
+            if (isDecoding) return;
+            isDecoding = true;
+            const w = video.videoWidth;
+            const h = video.videoHeight;
+            const tempCanvas = document.createElement('canvas');
+            tempCanvas.width = w;
+            tempCanvas.height = h;
+            const ctx = tempCanvas.getContext('2d');
+            ctx.drawImage(video, 0, 0, w, h);
+
+            // box座標から矩形領域取得
+            const minX = Math.min(...box.map(pt => pt[0]));
+            const minY = Math.min(...box.map(pt => pt[1]));
+            const maxX = Math.max(...box.map(pt => pt[0]));
+            const maxY = Math.max(...box.map(pt => pt[1]));
+            let boxW = maxX - minX;
+            let boxH = maxY - minY;
+
+            // 拡張（上下左右20%ずつ、はみ出しはクリップ）
+            const expandX = Math.floor(boxW * 0.2);
+            const expandY = Math.floor(boxH * 0.2);
+            let cropX = Math.max(minX - expandX, 0);
+            let cropY = Math.max(minY - expandY, 0);
+            boxW = Math.min(boxW + expandX * 2, w - cropX);
+            boxH = Math.min(boxH + expandY * 2, h - cropY);
+
+            // cropCanvas生成・画像コピー
+            const cropCanvas = document.createElement('canvas');
+            cropCanvas.width = boxW;
+            cropCanvas.height = boxH;
+            const cropCtx = cropCanvas.getContext('2d');
+            cropCtx.putImageData(ctx.getImageData(cropX, cropY, boxW, boxH), 0, 0);
+
+            // 前の画像があれば消す
+            let old = document.getElementById('cropped-barcode');
+            if (old) old.remove();
+            cropCanvas.id = 'cropped-barcode';
+            cropCanvas.style.display = 'block';
+            cropCanvas.style.margin = '10px auto';
+            cropCanvas.style.border = '2px solid blue';
+            document.body.appendChild(cropCanvas);
+
+            // decodeSingleで静止画デコード
+            Quagga.decodeSingle({
+                src: cropCanvas.toDataURL(),
+                inputStream: {
+                    size: Math.max(boxW, boxH)
+                },
+                locator: { patchSize: "medium", halfSample: true },
+                decoder: { readers: ["ean_reader", "upc_reader"] }
+            }, function(result) {
+                if (result && result.codeResult && result.codeResult.code) {
+                    isbn.value = result.codeResult.code;
+                    search();
+                    stopScanner();
+                } else {
+                    console.log("decodeSingle failed", result);
+                    isDecoding = false; // 失敗時は再度試行可
+                }
+            });
+        }
+
+        // 赤枠画像キャプチャ＆デコード（ユーザー操作時用）
+        function captureRedFrame() {
+            if (!lastVideo || !lastRedRect) {
+                alert("カメラ映像が取得できません");
+                return;
+            }
+            const w = lastVideo.videoWidth;
+            const h = lastVideo.videoHeight;
+            const tempCanvas = document.createElement('canvas');
+            tempCanvas.width = w;
+            tempCanvas.height = h;
+            const ctx = tempCanvas.getContext('2d');
+            ctx.drawImage(lastVideo, 0, 0, w, h);
+
+            // 赤枠領域
+            let cropX = lastRedRect.x;
+            let cropY = lastRedRect.y;
+            let boxW = lastRedRect.w;
+            let boxH = lastRedRect.h;
+
+            // cropCanvas生成・画像コピー
+            const cropCanvas = document.createElement('canvas');
+            cropCanvas.width = boxW;
+            cropCanvas.height = boxH;
+            const cropCtx = cropCanvas.getContext('2d');
+            cropCtx.putImageData(ctx.getImageData(cropX, cropY, boxW, boxH), 0, 0);
+
+            // 前の赤枠画像があれば消す
+            let old = document.getElementById('cropped-redframe');
+            if (old) old.remove();
+            cropCanvas.id = 'cropped-redframe';
+            cropCanvas.style.display = 'block';
+            cropCanvas.style.margin = '10px auto';
+            cropCanvas.style.border = '2px solid red';
+            document.body.appendChild(cropCanvas);
+
+            // decodeSingleで静止画デコード＆自動入力
+            Quagga.decodeSingle({
+                src: cropCanvas.toDataURL(),
+                inputStream: {
+                    size: Math.max(boxW, boxH)
+                },
+                locator: { patchSize: "medium", halfSample: true },
+                decoder: { readers: ["ean_reader", "upc_reader"] }
+            }, function(result) {
+                if (result && result.codeResult && result.codeResult.code) {
+                    isbn.value = result.codeResult.code;
+                    search();
+                    stopScanner();
+                } else {
+                    alert("赤枠画像のデコード失敗。consoleを確認してください。");
+                    console.log("decodeSingle failed (redframe)", result);
+                }
+            });
+        }
+
+        // 停止・後処理
+        function stopScanner() {
+            Quagga.stop();
+            if (overlayCanvas && overlayCanvas.parentNode) {
+                overlayCanvas.parentNode.removeChild(overlayCanvas);
+                overlayCanvas = null;
+            }
+            let old = document.getElementById('cropped-barcode');
+            if (old) old.remove();
+            let old2 = document.getElementById('cropped-redframe');
+            if (old2) old2.remove();
+        }
+
+        // カメラ切り替え
+        async function toggleCamera() {
+            currentFacingMode = currentFacingMode === "environment" ? "user" : "environment";
+            stopScanner();
+            await navigator.mediaDevices.getUserMedia({ video: false }).catch(()=>{});
+            setTimeout(() => { startScanner(); }, 300);
+        }
+
+        // デバッグ用：切り取り画像でもう一度デコード
+        function debugDecodeCropped() {
+            let cropCanvas = document.getElementById('cropped-barcode');
+            if (!cropCanvas) {
+                alert("切り取り画像がありません");
+                return;
+            }
+            Quagga.decodeSingle({
+                src: cropCanvas.toDataURL(),
+                inputStream: {
+                    size: Math.max(cropCanvas.width, cropCanvas.height)
+                },
+                locator: { patchSize: "medium", halfSample: true },
+                decoder: { readers: ["ean_reader", "upc_reader"] }
+            }, function(result) {
+                if (result && result.codeResult && result.codeResult.code) {
+                    alert("デバッグ再デコード成功: " + result.codeResult.code);
+                } else {
+                    alert("デバッグ再デコード失敗。consoleを確認してください。");
+                    console.log("debugDecodeCropped failed", result);
+                }
+            });
+        }
+    </script>
+</body>
+</html>
