@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ISBNバーコードリーダー</title>
+    <link rel="stylesheet" href="styles.css">
+    <!-- 
+        IIFE index.js registers:
+        window.BarcodeDetector
+        window.BarcodeDetectionAPI.BarcodeDetector
+        window.BarcodeDetectionAPI.prepareZXingModule
+    -->
+    <script src="https://fastly.jsdelivr.net/npm/barcode-detector@3/dist/iife/index.min.js"></script>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>📚 ISBNバーコードリーダー</h1>
+            <p>カメラでISBNバーコードをスキャンしてください</p>
+            <nav class="main-nav">
+                <button id="scannerBtn" class="nav-btn active">スキャナー</button>
+                <button id="bookshelfBtn" class="nav-btn">本棚</button>
+                <button id="optionsBtn" class="nav-btn">オプション</button>
+            </nav>
+        </header>
+
+        <main>
+            <!-- スキャナーページ -->
+            <div id="scannerPage" class="page active">
+            <div class="camera-section">
+                <div class="video-container">
+                    <video id="video" autoplay muted playsinline></video>
+                    <canvas id="canvas" style="display: none;"></canvas>
+                </div>
+                
+                <div class="controls">
+                    <button id="startBtn" class="btn btn-primary">カメラを開始</button>
+                    <button id="stopBtn" class="btn btn-secondary" disabled>カメラを停止</button>
+                </div>
+            </div>
+
+            <div class="result-section">
+                <h2>検出結果</h2>
+                <div id="result" class="result-display">
+                    <p class="placeholder">バーコードをカメラに向けてください</p>
+                </div>
+                
+                <div id="isbnInfo" class="isbn-info" style="display: none;">
+                    <h3>ISBN情報</h3>
+                    <div class="isbn-details">
+                        <p><strong>ISBN:</strong> <span id="isbnValue"></span></p>
+                        <p><strong>検出時刻:</strong> <span id="detectionTime"></span></p>
+                        <p><strong>フォーマット:</strong> <span id="format"></span></p>
+                    </div>
+                </div>
+
+                <div id="bookInfo" class="book-info" style="display: none;">
+                    <h3>📚 書籍情報</h3>
+                    <div id="bookDetails" class="book-details">
+                        <div class="book-loading">検索中...</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="status-section">
+                <div id="status" class="status-indicator">
+                    <span class="status-dot"></span>
+                    <span class="status-text">待機中</span>
+                </div>
+            </div>
+
+            <div class="cache-section">
+                <h3>💾 キャッシュ管理</h3>
+                <div class="cache-controls">
+                    <button id="clearCacheBtn" class="btn btn-warning">キャッシュを削除</button>
+                    <button id="clearImageCacheBtn" class="btn btn-secondary">画像キャッシュのみ削除</button>
+                    <span id="cacheInfo" class="cache-info">キャッシュされた書籍: 0件</span>
+                </div>
+                <div class="storage-info">
+                    <span id="storageUsage" class="storage-usage">ストレージ使用量: 0KB</span>
+                </div>
+            </div>
+            </div>
+
+            <!-- 本棚ページ -->
+            <div id="bookshelfPage" class="page">
+                <div class="bookshelf-header">
+                    <h2>📖 私の本棚</h2>
+                    <div class="bookshelf-controls">
+                        <div class="search-box">
+                            <input type="text" id="searchInput" placeholder="タイトル、著者、ISBNで検索...">
+                            <button id="searchBtn" class="btn btn-primary">検索</button>
+                        </div>
+                        <div class="series-filter">
+                            <select id="seriesFilter">
+                                <option value="">すべてのシリーズ</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bookshelf-stats">
+                    <span id="bookCount">登録書籍: 0冊</span>
+                    <span id="seriesCount">シリーズ数: 0</span>
+                </div>
+
+                <div class="bookshelf-actions">
+                    <button id="selectAllBtn" class="btn btn-secondary">すべて選択</button>
+                    <button id="deleteSelectedBtn" class="btn btn-danger" disabled>選択削除</button>
+                </div>
+
+                <div id="bookshelfList" class="bookshelf-list">
+                    <div class="empty-bookshelf">
+                        <p>📚 まだ本が登録されていません</p>
+                        <p>スキャナーでISBNを読み取って本を追加してください</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- オプションページ -->
+            <div id="optionsPage" class="page">
+                <div class="options-header">
+                    <h2>⚙️ オプション設定</h2>
+                </div>
+
+                <div class="options-section">
+                    <h3>📚 本棚設定</h3>
+                    <div class="option-item">
+                        <label class="option-label">
+                            <input type="checkbox" id="autoAddMode" class="option-checkbox">
+                            <span class="option-text">シリーズ自動追加モード</span>
+                        </label>
+                        <p class="option-description">
+                            有効にすると、ISBNを読み取った際に自動的に本棚に追加されます。<br>
+                            シリーズ名は自動的に推測されるか、手動で設定できます。
+                        </p>
+                    </div>
+
+                    <div class="option-item">
+                        <label class="option-label">
+                            <input type="checkbox" id="autoSeriesDetection" class="option-checkbox">
+                            <span class="option-text">シリーズ自動検出</span>
+                        </label>
+                        <p class="option-description">
+                            書籍のタイトルからシリーズ名を自動的に検出します。
+                        </p>
+                    </div>
+
+                    <div class="option-item">
+                        <label class="option-label">
+                            <input type="checkbox" id="showAddDialog" class="option-checkbox">
+                            <span class="option-text">追加確認ダイアログを表示</span>
+                        </label>
+                        <p class="option-description">
+                            無効にすると、自動追加モード時に確認ダイアログが表示されません。
+                        </p>
+                    </div>
+                </div>
+
+                <div class="options-section">
+                    <h3>🔍 検索設定</h3>
+                    <div class="option-item">
+                        <label class="option-label">
+                            <input type="checkbox" id="excludeJAN" class="option-checkbox" checked>
+                            <span class="option-text">JANコード（192で始まる）を除外</span>
+                        </label>
+                        <p class="option-description">
+                            192で始まるJANコードをISBNとして認識しないようにします。
+                        </p>
+                    </div>
+                </div>
+
+                <div class="options-section">
+                    <h3>💾 キャッシュ設定</h3>
+                    <div class="option-item">
+                        <label class="option-label">
+                            <input type="checkbox" id="enableImageCache" class="option-checkbox" checked>
+                            <span class="option-text">画像キャッシュを有効にする</span>
+                        </label>
+                        <p class="option-description">
+                            書籍の表紙画像をローカルにキャッシュして、表示速度を向上させます。
+                        </p>
+                    </div>
+                </div>
+
+                <div class="options-actions">
+                    <button id="saveOptionsBtn" class="btn btn-primary">設定を保存</button>
+                    <button id="resetOptionsBtn" class="btn btn-secondary">デフォルトに戻す</button>
+                </div>
+            </div>
+        </main>
+
+        <footer>
+            <p>ISBNバーコードリーダー v1.0.0</p>
+        </footer>
+    </div>
+
+    <script type="module" src="app.js"></script>
+</body>
+</html>

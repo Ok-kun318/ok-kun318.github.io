@@ -1,0 +1,942 @@
+/* ISBNバーコードリーダー スタイルシート */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background: linear-gradient(135deg, #ffffff 0%, #e3f2fd 100%);
+    min-height: 100vh;
+    color: #333;
+}
+
+.container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 20px;
+}
+
+header {
+    text-align: center;
+    margin-bottom: 30px;
+    color: #333;
+}
+
+header h1 {
+    font-size: 2.5rem;
+    margin-bottom: 10px;
+    color: #1976d2;
+    text-shadow: 1px 1px 2px rgba(0,0,0,0.1);
+}
+
+header p {
+    font-size: 1.1rem;
+    color: #666;
+}
+
+main {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 30px;
+    margin-bottom: 30px;
+}
+
+@media (max-width: 768px) {
+    main {
+        grid-template-columns: 1fr;
+    }
+}
+
+.camera-section {
+    background: white;
+    border-radius: 15px;
+    padding: 20px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+}
+
+.video-container {
+    position: relative;
+    width: 100%;
+    height: 300px;
+    border-radius: 10px;
+    overflow: hidden;
+    background: #f0f0f0;
+    margin-bottom: 20px;
+}
+
+#video {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.controls {
+    display: flex;
+    gap: 15px;
+    justify-content: center;
+}
+
+.btn {
+    padding: 12px 24px;
+    border: none;
+    border-radius: 8px;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    min-width: 120px;
+}
+
+.btn-primary {
+    background: linear-gradient(45deg, #1976d2, #1565c0);
+    color: white;
+}
+
+.btn-primary:hover:not(:disabled) {
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(25, 118, 210, 0.4);
+}
+
+.btn-secondary {
+    background: linear-gradient(45deg, #424242, #212121);
+    color: white;
+}
+
+.btn-secondary:hover:not(:disabled) {
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(66, 66, 66, 0.4);
+}
+
+.btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    transform: none;
+}
+
+.result-section {
+    background: white;
+    border-radius: 15px;
+    padding: 20px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+}
+
+.result-section h2 {
+    margin-bottom: 20px;
+    color: #333;
+    font-size: 1.5rem;
+}
+
+.result-display {
+    min-height: 150px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 2px dashed #ddd;
+    border-radius: 10px;
+    padding: 20px;
+    text-align: center;
+}
+
+.placeholder {
+    color: #999;
+    font-style: italic;
+}
+
+.success-message {
+    text-align: center;
+}
+
+.success-message h3 {
+    color: #1976d2;
+    margin-bottom: 15px;
+    font-size: 1.3rem;
+}
+
+.isbn-display {
+    font-size: 1.5rem;
+    font-weight: bold;
+    color: #333;
+    background: #f8f9fa;
+    padding: 15px;
+    border-radius: 8px;
+    border: 2px solid #1976d2;
+    font-family: 'Courier New', monospace;
+}
+
+.barcode-info {
+    margin-top: 10px;
+    color: #666;
+    font-size: 0.9rem;
+}
+
+.barcode-info small {
+    display: block;
+    line-height: 1.4;
+}
+
+.error-message {
+    text-align: center;
+}
+
+.error-message h3 {
+    color: #f44336;
+    margin-bottom: 15px;
+    font-size: 1.3rem;
+}
+
+.error-message p {
+    color: #666;
+}
+
+.isbn-info {
+    margin-top: 20px;
+    padding: 15px;
+    background: #f8f9fa;
+    border-radius: 8px;
+    border-left: 4px solid #1976d2;
+}
+
+.isbn-info h3 {
+    color: #333;
+    margin-bottom: 15px;
+    font-size: 1.2rem;
+}
+
+.isbn-details p {
+    margin-bottom: 8px;
+    color: #666;
+}
+
+.isbn-details strong {
+    color: #333;
+}
+
+.status-section {
+    grid-column: 1 / -1;
+    display: flex;
+    justify-content: center;
+    margin-top: 20px;
+}
+
+.status-indicator {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    background: white;
+    padding: 15px 25px;
+    border-radius: 25px;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+}
+
+.status-dot {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    animation: pulse 2s infinite;
+}
+
+.status-dot.ready {
+    background: #4CAF50;
+}
+
+.status-dot.loading {
+    background: #FF9800;
+}
+
+.status-dot.scanning {
+    background: #2196F3;
+}
+
+.status-dot.success {
+    background: #4CAF50;
+}
+
+.status-dot.error {
+    background: #f44336;
+}
+
+.status-text {
+    font-weight: 600;
+    color: #333;
+}
+
+@keyframes pulse {
+    0% {
+        transform: scale(1);
+        opacity: 1;
+    }
+    50% {
+        transform: scale(1.2);
+        opacity: 0.7;
+    }
+    100% {
+        transform: scale(1);
+        opacity: 1;
+    }
+}
+
+footer {
+    text-align: center;
+    color: white;
+    opacity: 0.8;
+    margin-top: 30px;
+}
+
+footer p {
+    font-size: 0.9rem;
+}
+
+/* 書籍情報表示 */
+.book-info {
+    margin-top: 20px;
+    padding: 15px;
+    background: #f8f9fa;
+    border-radius: 8px;
+    border-left: 4px solid #1976d2;
+}
+
+.book-info h3 {
+    color: #333;
+    margin-bottom: 15px;
+    font-size: 1.2rem;
+}
+
+.book-card {
+    background: white;
+    border-radius: 8px;
+    padding: 15px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+
+.book-header {
+    display: flex;
+    gap: 15px;
+    margin-bottom: 15px;
+}
+
+.book-thumbnail {
+    width: 120px;
+    height: 160px;
+    object-fit: cover;
+    border-radius: 4px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.book-title-section {
+    flex: 1;
+}
+
+.book-title {
+    color: #333;
+    font-size: 1.3rem;
+    margin-bottom: 8px;
+    line-height: 1.3;
+}
+
+.book-authors,
+.book-publisher {
+    color: #666;
+    margin-bottom: 5px;
+    font-size: 0.95rem;
+}
+
+.book-details-content {
+    color: #555;
+    line-height: 1.6;
+}
+
+.book-description {
+    margin-bottom: 15px;
+    font-size: 0.95rem;
+}
+
+.book-meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 15px;
+    margin-bottom: 10px;
+}
+
+.book-meta-item {
+    background: #e3f2fd;
+    color: #1976d2;
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 0.85rem;
+    font-weight: 500;
+}
+
+.book-categories {
+    color: #666;
+    font-size: 0.9rem;
+    font-style: italic;
+}
+
+.book-loading,
+.book-not-found,
+.book-error {
+    text-align: center;
+    padding: 20px;
+    color: #666;
+    font-style: italic;
+}
+
+.book-error {
+    color: #f44336;
+}
+
+/* キャッシュ管理 */
+.cache-section {
+    grid-column: 1 / -1;
+    background: white;
+    border-radius: 15px;
+    padding: 20px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+    margin-top: 20px;
+}
+
+.cache-section h3 {
+    color: #333;
+    margin-bottom: 15px;
+    font-size: 1.2rem;
+}
+
+.cache-controls {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    flex-wrap: wrap;
+}
+
+.btn-warning {
+    background: linear-gradient(45deg, #ff5722, #d84315);
+    color: white;
+}
+
+.btn-warning:hover:not(:disabled) {
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(255, 87, 34, 0.4);
+}
+
+.cache-info {
+    color: #666;
+    font-size: 0.9rem;
+    background: #f5f5f5;
+    padding: 8px 12px;
+    border-radius: 4px;
+}
+
+.storage-info {
+    margin-top: 10px;
+}
+
+.storage-usage {
+    color: #666;
+    font-size: 0.85rem;
+    background: #e3f2fd;
+    color: #1976d2;
+    padding: 6px 10px;
+    border-radius: 4px;
+    font-weight: 500;
+}
+
+/* レスポンシブデザイン - 書籍情報 */
+@media (max-width: 768px) {
+    .book-header {
+        flex-direction: column;
+        text-align: center;
+    }
+    
+    .book-thumbnail {
+        width: 100px;
+        height: 140px;
+        margin: 0 auto;
+    }
+    
+    .book-meta {
+        flex-direction: column;
+        gap: 8px;
+    }
+    
+    .book-meta-item {
+        text-align: center;
+    }
+}
+
+@media (max-width: 480px) {
+    .book-thumbnail {
+        width: 80px;
+        height: 120px;
+    }
+    
+    .book-title {
+        font-size: 1.1rem;
+    }
+    
+    .cache-controls {
+        flex-direction: column;
+        align-items: stretch;
+    }
+    
+    .btn-warning {
+        width: 100%;
+    }
+}
+
+/* ナビゲーション */
+.main-nav {
+    display: flex;
+    gap: 10px;
+    margin-top: 20px;
+    justify-content: center;
+}
+
+.nav-btn {
+    padding: 10px 20px;
+    border: none;
+    border-radius: 8px;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    background: rgba(255, 255, 255, 0.8);
+    color: #333;
+    border: 2px solid rgba(25, 118, 210, 0.3);
+}
+
+.nav-btn:hover {
+    background: rgba(25, 118, 210, 0.1);
+    transform: translateY(-2px);
+    border-color: rgba(25, 118, 210, 0.5);
+}
+
+.nav-btn.active {
+    background: #1976d2;
+    color: white;
+    border-color: #1976d2;
+}
+
+/* ページ管理 */
+.page {
+    display: none;
+}
+
+.page.active {
+    display: block;
+}
+
+/* 本棚ページ */
+.bookshelf-header {
+    background: white;
+    border-radius: 15px;
+    padding: 20px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+    margin-bottom: 20px;
+}
+
+.bookshelf-header h2 {
+    color: #333;
+    margin-bottom: 20px;
+    font-size: 1.8rem;
+}
+
+.bookshelf-controls {
+    display: flex;
+    gap: 15px;
+    flex-wrap: wrap;
+    align-items: center;
+}
+
+.search-box {
+    display: flex;
+    gap: 10px;
+    flex: 1;
+    min-width: 300px;
+}
+
+.search-box input {
+    flex: 1;
+    padding: 10px;
+    border: 2px solid #ddd;
+    border-radius: 8px;
+    font-size: 1rem;
+}
+
+.series-filter select {
+    padding: 10px;
+    border: 2px solid #ddd;
+    border-radius: 8px;
+    font-size: 1rem;
+    min-width: 200px;
+}
+
+.bookshelf-stats {
+    display: flex;
+    gap: 20px;
+    margin-bottom: 20px;
+    background: white;
+    padding: 15px;
+    border-radius: 10px;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+}
+
+.bookshelf-stats span {
+    color: #666;
+    font-weight: 500;
+}
+
+.bookshelf-actions {
+    display: flex;
+    gap: 15px;
+    margin-bottom: 20px;
+    background: white;
+    padding: 15px;
+    border-radius: 10px;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+}
+
+.btn-danger {
+    background: linear-gradient(45deg, #d32f2f, #b71c1c);
+    color: white;
+}
+
+.btn-danger:hover:not(:disabled) {
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(211, 47, 47, 0.4);
+}
+
+.bookshelf-list {
+    display: grid;
+    gap: 15px;
+}
+
+.book-card {
+    background: white;
+    border-radius: 10px;
+    padding: 15px;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+    transition: transform 0.2s ease;
+}
+
+.book-card:hover {
+    transform: translateY(-2px);
+}
+
+.book-card-header {
+    display: flex;
+    gap: 15px;
+    align-items: flex-start;
+}
+
+.book-checkbox {
+    margin-top: 5px;
+    transform: scale(1.2);
+}
+
+.book-card-info {
+    flex: 1;
+}
+
+.book-card-title {
+    color: #333;
+    font-size: 1.2rem;
+    margin-bottom: 8px;
+    line-height: 1.3;
+}
+
+.book-card-authors,
+.book-card-isbn,
+.book-card-series,
+.book-card-date {
+    color: #666;
+    margin-bottom: 5px;
+    font-size: 0.9rem;
+}
+
+.book-card-thumbnail {
+    width: 80px;
+    height: 110px;
+    object-fit: cover;
+    border-radius: 4px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.empty-bookshelf {
+    text-align: center;
+    padding: 60px 20px;
+    color: #666;
+    background: white;
+    border-radius: 15px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+}
+
+.empty-bookshelf p {
+    margin-bottom: 10px;
+    font-size: 1.1rem;
+}
+
+/* 本棚追加ダイアログ */
+.add-to-bookshelf {
+    margin-top: 20px;
+    padding: 20px;
+    background: #f8f9fa;
+    border-radius: 8px;
+    border-left: 4px solid #1976d2;
+}
+
+.add-to-bookshelf h4 {
+    color: #333;
+    margin-bottom: 15px;
+    font-size: 1.2rem;
+}
+
+.series-input {
+    margin-bottom: 15px;
+}
+
+.series-input label {
+    display: block;
+    margin-bottom: 5px;
+    color: #666;
+    font-weight: 500;
+}
+
+.series-input input {
+    width: 100%;
+    padding: 8px;
+    border: 2px solid #ddd;
+    border-radius: 4px;
+    font-size: 1rem;
+}
+
+.add-actions {
+    display: flex;
+    gap: 10px;
+}
+
+.already-added {
+    color: #1976d2;
+    font-weight: 500;
+    text-align: center;
+    padding: 10px;
+    background: #e3f2fd;
+    border-radius: 4px;
+}
+
+/* シリーズ選択ダイアログ */
+.series-selection {
+    margin-bottom: 15px;
+}
+
+.series-selection label {
+    display: block;
+    margin-bottom: 8px;
+    color: #666;
+    font-weight: 500;
+}
+
+.series-select {
+    width: 100%;
+    padding: 10px;
+    border: 2px solid #ddd;
+    border-radius: 4px;
+    font-size: 1rem;
+    background: white;
+}
+
+.series-select:focus {
+    outline: none;
+    border-color: #1976d2;
+}
+
+#newSeriesName {
+    width: 100%;
+    padding: 10px;
+    border: 2px solid #ddd;
+    border-radius: 4px;
+    font-size: 1rem;
+    margin-top: 8px;
+}
+
+#newSeriesName:focus {
+    outline: none;
+    border-color: #1976d2;
+}
+
+/* オプションページ */
+.options-header {
+    background: white;
+    border-radius: 15px;
+    padding: 20px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+    margin-bottom: 20px;
+    text-align: center;
+}
+
+.options-header h2 {
+    color: #333;
+    font-size: 1.8rem;
+    margin: 0;
+}
+
+.options-section {
+    background: white;
+    border-radius: 15px;
+    padding: 20px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+    margin-bottom: 20px;
+}
+
+.options-section h3 {
+    color: #333;
+    margin-bottom: 20px;
+    font-size: 1.3rem;
+    border-bottom: 2px solid #f0f0f0;
+    padding-bottom: 10px;
+}
+
+.option-item {
+    margin-bottom: 25px;
+    padding: 15px;
+    background: #f8f9fa;
+    border-radius: 8px;
+    border-left: 4px solid #1976d2;
+}
+
+.option-label {
+    display: flex;
+    align-items: center;
+    cursor: pointer;
+    margin-bottom: 10px;
+}
+
+.option-checkbox {
+    margin-right: 12px;
+    transform: scale(1.2);
+}
+
+.option-text {
+    font-weight: 600;
+    color: #333;
+    font-size: 1.1rem;
+}
+
+.option-description {
+    color: #666;
+    font-size: 0.9rem;
+    line-height: 1.5;
+    margin: 0;
+    margin-left: 28px;
+}
+
+.options-actions {
+    background: white;
+    border-radius: 15px;
+    padding: 20px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+    display: flex;
+    gap: 15px;
+    justify-content: center;
+}
+
+/* レスポンシブデザイン - オプション */
+@media (max-width: 768px) {
+    .options-actions {
+        flex-direction: column;
+    }
+    
+    .option-description {
+        margin-left: 0;
+        margin-top: 8px;
+    }
+}
+
+/* レスポンシブデザイン - 本棚 */
+@media (max-width: 768px) {
+    .bookshelf-controls {
+        flex-direction: column;
+        align-items: stretch;
+    }
+    
+    .search-box {
+        min-width: auto;
+    }
+    
+    .book-card-header {
+        flex-direction: column;
+        text-align: center;
+    }
+    
+    .book-card-thumbnail {
+        width: 100px;
+        height: 140px;
+        margin: 0 auto;
+    }
+    
+    .bookshelf-actions {
+        flex-direction: column;
+    }
+    
+    .add-actions {
+        flex-direction: column;
+    }
+}
+
+@media (max-width: 480px) {
+    .book-card-thumbnail {
+        width: 80px;
+        height: 120px;
+    }
+    
+    .book-card-title {
+        font-size: 1.1rem;
+    }
+    
+    .bookshelf-stats {
+        flex-direction: column;
+        gap: 10px;
+    }
+}
+
+/* レスポンシブデザイン */
+@media (max-width: 480px) {
+    .container {
+        padding: 10px;
+    }
+    
+    header h1 {
+        font-size: 2rem;
+    }
+    
+    .video-container {
+        height: 250px;
+    }
+    
+    .controls {
+        flex-direction: column;
+        align-items: center;
+    }
+    
+    .btn {
+        width: 100%;
+        max-width: 200px;
+    }
+}
+
+/* アニメーション */
+.fade-in {
+    animation: fadeIn 0.5s ease-in;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
