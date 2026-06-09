@@ -4,681 +4,368 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>OpenRouter Chat</title>
-<style>
-  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-
-  :root {
-    --bg: #0f0f11;
-    --bg2: #17171a;
-    --bg3: #1e1e22;
-    --border: rgba(255,255,255,0.08);
-    --border2: rgba(255,255,255,0.14);
-    --text: #e8e8ec;
-    --text2: #9090a0;
-    --text3: #5a5a6a;
-    --accent: #7c6af7;
-    --accent2: #9d8fff;
-    --accent-bg: rgba(124,106,247,0.12);
-    --green: #3ecf8e;
-    --red: #f76c6c;
-    --radius: 12px;
-    --radius-sm: 8px;
-  }
-
-  body {
-    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-    background: var(--bg);
-    color: var(--text);
-    height: 100dvh;
-    display: flex;
-    flex-direction: column;
-    overflow: hidden;
-  }
-
-  /* ── header ── */
-  header {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    padding: 14px 20px;
-    border-bottom: 0.5px solid var(--border);
-    background: var(--bg);
-    flex-shrink: 0;
-  }
-
-  .logo {
-    font-size: 15px;
-    font-weight: 600;
-    color: var(--text);
-    letter-spacing: -0.02em;
-  }
-  .logo span { color: var(--accent2); }
-
-  header .spacer { flex: 1; }
-
-  /* custom model dropdown */
-  .model-dropdown {
-    position: relative;
-  }
-  .model-dropdown-btn {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    background: var(--bg3);
-    border: 0.5px solid var(--border2);
-    border-radius: var(--radius-sm);
-    color: var(--text);
-    font-size: 13px;
-    padding: 6px 10px;
-    cursor: pointer;
-    min-width: 180px;
-    max-width: 240px;
-    font-family: inherit;
-    transition: border-color 0.15s;
-    white-space: nowrap;
-    overflow: hidden;
-  }
-  .model-dropdown-btn:hover { border-color: rgba(124,106,247,0.4); }
-  .model-dropdown-btn.open { border-color: var(--accent); }
-  .model-dropdown-btn .btn-label {
-    flex: 1;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    text-align: left;
-  }
-  .model-dropdown-btn .chevron {
-    flex-shrink: 0;
-    transition: transform 0.2s;
-    color: var(--text3);
-    font-size: 10px;
-  }
-  .model-dropdown-btn.open .chevron { transform: rotate(180deg); }
-
-  .model-dropdown-list {
-    display: none;
-    position: absolute;
-    top: calc(100% + 6px);
-    right: 0;
-    z-index: 300;
-    background: var(--bg2);
-    border: 0.5px solid var(--border2);
-    border-radius: var(--radius);
-    min-width: 320px;
-    max-height: 420px;
-    overflow-y: auto;
-    box-shadow: 0 16px 48px rgba(0,0,0,0.5);
-  }
-  .model-dropdown-list::-webkit-scrollbar { width: 4px; }
-  .model-dropdown-list::-webkit-scrollbar-thumb { background: var(--bg3); border-radius: 4px; }
-  .model-dropdown-list.open { display: block; }
-
-  .dropdown-search {
-    padding: 10px 12px 8px;
-    border-bottom: 0.5px solid var(--border);
-    position: sticky;
-    top: 0;
-    background: var(--bg2);
-    z-index: 1;
-  }
-  .dropdown-search input {
-    width: 100%;
-    background: var(--bg3);
-    border: 0.5px solid var(--border2);
-    border-radius: var(--radius-sm);
-    color: var(--text);
-    font-size: 12px;
-    padding: 6px 10px;
-    outline: none;
-    font-family: inherit;
-  }
-  .dropdown-search input:focus { border-color: var(--accent); }
-
-  .dropdown-item {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 9px 14px;
-    cursor: pointer;
-    transition: background 0.1s;
-    gap: 10px;
-  }
-  .dropdown-item:hover { background: rgba(255,255,255,0.04); }
-  .dropdown-item.selected { background: var(--accent-bg); }
-  .dropdown-item .item-name {
-    font-size: 13px;
-    color: var(--text);
-    flex: 1;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-  }
-  .dropdown-item .item-perf {
-    display: flex;
-    gap: 5px;
-    flex-shrink: 0;
-  }
-  .dropdown-item .item-stat {
-    display: flex;
-    flex-direction: column;
-    align-items: flex-end;
-    gap: 1px;
-  }
-  .dropdown-item .stat-val {
-    font-size: 11px;
-    font-weight: 500;
-    color: var(--text2);
-    line-height: 1;
-  }
-  .dropdown-item .stat-label {
-    font-size: 9px;
-    color: var(--text3);
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
-    line-height: 1;
-  }
-  .dropdown-item .stat-sep {
-    width: 0.5px;
-    height: 22px;
-    background: var(--border);
-    flex-shrink: 0;
-    margin: 0 2px;
-  }
-  .dropdown-loading {
-    padding: 16px;
-    text-align: center;
-    font-size: 12px;
-    color: var(--text3);
-  }
-
-  .model-status {
-    font-size: 12px;
-    color: var(--text3);
-    white-space: nowrap;
-  }
-  .model-status.ok { color: var(--green); }
-  .model-status.loading { color: var(--accent2); }
-
-  .perf-badges {
-    display: flex;
-    gap: 6px;
-    align-items: center;
-  }
-  .perf-badge {
-    display: flex;
-    align-items: center;
-    gap: 4px;
-    background: var(--bg3);
-    border: 0.5px solid var(--border2);
-    border-radius: 6px;
-    padding: 3px 8px;
-    font-size: 11px;
-    color: var(--text2);
-    white-space: nowrap;
-  }
-  .perf-badge .badge-label {
-    color: var(--text3);
-    font-size: 10px;
-    text-transform: uppercase;
-    letter-spacing: 0.04em;
-  }
-  .perf-badge .badge-val {
-    font-weight: 500;
-    color: var(--text);
-  }
-  .perf-badge.loading-badge {
-    color: var(--text3);
-    font-style: italic;
-  }
-
-  .unit-btn {
-    background: transparent;
-    border: none;
-    color: var(--text3);
-    font-size: 12px;
-    padding: 5px 12px;
-    cursor: pointer;
-    font-family: inherit;
-    transition: background 0.1s, color 0.1s;
-  }
-  .unit-btn:hover { background: var(--bg3); color: var(--text); }
-  .unit-btn.active { background: var(--accent); color: #fff; }
-
-  /* settings button */
-  #settings-btn {
-    background: var(--bg3);
-    border: 0.5px solid var(--border);
-    border-radius: var(--radius-sm);
-    color: var(--text2);
-    width: 34px;
-    height: 34px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    cursor: pointer;
-    font-size: 16px;
-    flex-shrink: 0;
-    transition: border-color 0.15s, color 0.15s;
-  }
-  #settings-btn:hover { border-color: var(--border2); color: var(--text); }
-
-  /* new chat button */
-  #new-chat-btn {
-    background: transparent;
-    border: 0.5px solid var(--border);
-    border-radius: var(--radius-sm);
-    color: var(--text2);
-    padding: 6px 12px;
-    font-size: 13px;
-    cursor: pointer;
-    transition: border-color 0.15s, color 0.15s;
-    white-space: nowrap;
-  }
-  #new-chat-btn:hover { border-color: var(--border2); color: var(--text); }
-
-  /* ── settings panel ── */
-  #settings-panel {
-    display: none;
-    position: absolute;
-    top: 58px;
-    right: 20px;
-    z-index: 100;
-    background: var(--bg2);
-    border: 0.5px solid var(--border2);
-    border-radius: var(--radius);
-    padding: 16px;
-    width: 320px;
-    box-shadow: 0 16px 48px rgba(0,0,0,0.5);
-  }
-  #settings-panel.open { display: block; }
-
-  .settings-title {
-    font-size: 13px;
-    font-weight: 500;
-    color: var(--text);
-    margin-bottom: 12px;
-  }
-
-  .field-label {
-    font-size: 12px;
-    color: var(--text2);
-    margin-bottom: 6px;
-    display: block;
-  }
-
-  .field-group { margin-bottom: 14px; }
-
-  .key-input-row {
-    display: flex;
-    gap: 8px;
-  }
-
-  input[type="text"], input[type="password"] {
-    background: var(--bg3);
-    border: 0.5px solid var(--border2);
-    border-radius: var(--radius-sm);
-    color: var(--text);
-    font-size: 13px;
-    padding: 8px 10px;
-    width: 100%;
-    outline: none;
-    transition: border-color 0.15s;
-    font-family: inherit;
-  }
-  input[type="text"]:focus, input[type="password"]:focus {
-    border-color: var(--accent);
-  }
-
-  .btn-save {
-    background: var(--accent);
-    border: none;
-    border-radius: var(--radius-sm);
-    color: #fff;
-    font-size: 13px;
-    padding: 8px 14px;
-    cursor: pointer;
-    flex-shrink: 0;
-    transition: opacity 0.15s;
-    font-family: inherit;
-  }
-  .btn-save:hover { opacity: 0.9; }
-
-  .api-hint {
-    font-size: 11px;
-    color: var(--text3);
-    margin-top: 6px;
-    line-height: 1.5;
-  }
-  .api-hint a { color: var(--accent2); text-decoration: none; }
-  .api-hint a:hover { text-decoration: underline; }
-
-  .sys-textarea {
-    background: var(--bg3);
-    border: 0.5px solid var(--border2);
-    border-radius: var(--radius-sm);
-    color: var(--text);
-    font-size: 13px;
-    padding: 8px 10px;
-    width: 100%;
-    min-height: 70px;
-    resize: vertical;
-    outline: none;
-    font-family: inherit;
-    line-height: 1.5;
-    transition: border-color 0.15s;
-  }
-  .sys-textarea:focus { border-color: var(--accent); }
-
-  /* ── messages ── */
-  #messages {
-    flex: 1;
-    overflow-y: auto;
-    padding: 24px 0;
-    display: flex;
-    flex-direction: column;
-    gap: 0;
-    scroll-behavior: smooth;
-  }
-  #messages::-webkit-scrollbar { width: 4px; }
-  #messages::-webkit-scrollbar-track { background: transparent; }
-  #messages::-webkit-scrollbar-thumb { background: var(--bg3); border-radius: 4px; }
-
-  .msg-row {
-    display: flex;
-    padding: 10px 24px;
-    gap: 14px;
-    transition: background 0.1s;
-  }
-  .msg-row:hover { background: rgba(255,255,255,0.015); }
-
-  .msg-row.user { flex-direction: row-reverse; }
-
-  .avatar {
-    width: 30px;
-    height: 30px;
-    border-radius: 8px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 12px;
-    font-weight: 600;
-    flex-shrink: 0;
-    margin-top: 2px;
-  }
-  .avatar.ai {
-    background: var(--accent-bg);
-    color: var(--accent2);
-    border: 0.5px solid rgba(124,106,247,0.25);
-  }
-  .avatar.user {
-    background: rgba(62,207,142,0.12);
-    color: var(--green);
-    border: 0.5px solid rgba(62,207,142,0.2);
-  }
-
-  .msg-bubble {
-    max-width: min(72%, 640px);
-    font-size: 14px;
-    line-height: 1.75;
-    color: var(--text);
-  }
-
-  .msg-row.user .msg-bubble {
-    background: var(--bg3);
-    border: 0.5px solid var(--border);
-    border-radius: 12px 4px 12px 12px;
-    padding: 10px 14px;
-    color: var(--text);
-  }
-
-  .msg-row.ai .msg-bubble {
-    color: var(--text);
-    padding: 4px 0;
-  }
-
-  /* markdown-ish */
-  .msg-bubble pre {
-    background: var(--bg3);
-    border: 0.5px solid var(--border);
-    border-radius: var(--radius-sm);
-    padding: 0;
-    overflow: hidden;
-    font-size: 13px;
-    margin: 8px 0;
-    font-family: "SF Mono", "Fira Code", monospace;
-    line-height: 1.6;
-    position: relative;
-  }
-  .code-header {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 6px 12px;
-    background: rgba(255,255,255,0.04);
-    border-bottom: 0.5px solid var(--border);
-  }
-  .code-lang {
-    font-size: 11px;
-    color: var(--text3);
-    font-family: "SF Mono", "Fira Code", monospace;
-    text-transform: lowercase;
-  }
-  .copy-btn {
-    background: transparent;
-    border: 0.5px solid var(--border);
-    border-radius: 4px;
-    color: var(--text3);
-    font-size: 11px;
-    padding: 2px 8px;
-    cursor: pointer;
-    font-family: inherit;
-    transition: border-color 0.15s, color 0.15s;
-    line-height: 1.6;
-  }
-  .copy-btn:hover { border-color: var(--border2); color: var(--text2); }
-  .copy-btn.copied { color: var(--green); border-color: rgba(62,207,142,0.3); }
-  .msg-bubble pre code {
-    display: block;
-    padding: 12px 14px;
-    overflow-x: auto;
-  }
-  /* highlight.js テーマ上書き（背景透過） */
-  .hljs { background: transparent !important; padding: 0 !important; }
-
-  /* シンタックスカラー（ダーク） */
-  .hljs-keyword  { color: #c792ea; }
-  .hljs-string   { color: #c3e88d; }
-  .hljs-comment  { color: #546e7a; font-style: italic; }
-  .hljs-number   { color: #f78c6c; }
-  .hljs-built_in { color: #82aaff; }
-  .hljs-title    { color: #82aaff; }
-  .hljs-attr     { color: #ffcb6b; }
-  .hljs-literal  { color: #ff5370; }
-  .hljs-type     { color: #ffcb6b; }
-  .hljs-variable { color: #eeffff; }
-  .hljs-params   { color: #eeffff; }
-  .hljs-tag      { color: #f07178; }
-  .hljs-name     { color: #f07178; }
-  .msg-bubble code {
-    background: var(--bg3);
-    border-radius: 4px;
-    padding: 1px 5px;
-    font-size: 12.5px;
-    font-family: "SF Mono", "Fira Code", monospace;
-    color: var(--accent2);
-  }
-  .msg-bubble pre code {
-    background: none;
-    padding: 0;
-    color: var(--text);
-  }
-  .msg-bubble p { margin-bottom: 8px; }
-  .msg-bubble p:last-child { margin-bottom: 0; }
-  .msg-bubble ul, .msg-bubble ol {
-    padding-left: 20px;
-    margin-bottom: 8px;
-  }
-  .msg-bubble li { margin-bottom: 3px; }
-  .msg-bubble strong { font-weight: 600; color: var(--text); }
-  .msg-bubble h1, .msg-bubble h2, .msg-bubble h3 {
-    font-weight: 600;
-    margin: 12px 0 6px;
-    color: var(--text);
-  }
-  .msg-bubble h1 { font-size: 18px; }
-  .msg-bubble h2 { font-size: 16px; }
-  .msg-bubble h3 { font-size: 14px; }
-
-  /* typing indicator */
-  .typing-dot {
-    display: inline-flex;
-    gap: 4px;
-    align-items: center;
-    padding: 4px 0;
-  }
-  .typing-dot span {
-    width: 6px;
-    height: 6px;
-    border-radius: 50%;
-    background: var(--text3);
-    animation: bounce 1.2s infinite;
-  }
-  .typing-dot span:nth-child(2) { animation-delay: 0.2s; }
-  .typing-dot span:nth-child(3) { animation-delay: 0.4s; }
-  @keyframes bounce {
-    0%, 60%, 100% { transform: translateY(0); }
-    30% { transform: translateY(-5px); }
-  }
-
-  /* empty state */
-  #empty-state {
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    gap: 8px;
-    color: var(--text3);
-    font-size: 14px;
-    user-select: none;
-    padding: 40px 20px;
-    text-align: center;
-  }
-  #empty-state .big { font-size: 28px; margin-bottom: 4px; }
-  #empty-state .name {
-    font-size: 17px;
-    font-weight: 500;
-    color: var(--text2);
-    margin-bottom: 4px;
-  }
-  #empty-state .no-key {
-    background: rgba(247,108,108,0.1);
-    border: 0.5px solid rgba(247,108,108,0.25);
-    border-radius: var(--radius-sm);
-    color: var(--red);
-    font-size: 12px;
-    padding: 6px 12px;
-    margin-top: 8px;
-  }
-
-  /* ── input area ── */
-  #input-area {
-    padding: 14px 20px 20px;
-    border-top: 0.5px solid var(--border);
-    background: var(--bg);
-    flex-shrink: 0;
-  }
-
-  .input-box {
-    display: flex;
-    align-items: flex-end;
-    gap: 10px;
-    background: var(--bg2);
-    border: 0.5px solid var(--border2);
-    border-radius: 14px;
-    padding: 10px 12px;
-    transition: border-color 0.15s;
-  }
-  .input-box:focus-within { border-color: rgba(124,106,247,0.4); }
-
-  #user-input {
-    flex: 1;
-    background: none;
-    border: none;
-    outline: none;
-    color: var(--text);
-    font-size: 14px;
-    font-family: inherit;
-    line-height: 1.6;
-    resize: none;
-    max-height: 160px;
-    min-height: 22px;
-    overflow-y: auto;
-  }
-  #user-input::placeholder { color: var(--text3); }
-  #user-input::-webkit-scrollbar { width: 3px; }
-  #user-input::-webkit-scrollbar-thumb { background: var(--bg3); border-radius: 3px; }
-
-  #send-btn {
-    background: var(--accent);
-    border: none;
-    border-radius: 8px;
-    width: 34px;
-    height: 34px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    cursor: pointer;
-    flex-shrink: 0;
-    transition: opacity 0.15s, transform 0.1s;
-    color: #fff;
-  }
-  #send-btn:hover { opacity: 0.9; }
-  #send-btn:active { transform: scale(0.95); }
-  #send-btn:disabled { opacity: 0.35; cursor: not-allowed; }
-
-  #send-btn svg { width: 16px; height: 16px; }
-
-  .input-footer {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-top: 8px;
-    padding: 0 2px;
-  }
-  .input-hint { font-size: 11px; color: var(--text3); }
-  #stop-btn {
-    display: none;
-    background: rgba(247,108,108,0.1);
-    border: 0.5px solid rgba(247,108,108,0.25);
-    border-radius: var(--radius-sm);
-    color: var(--red);
-    font-size: 12px;
-    padding: 4px 10px;
-    cursor: pointer;
-    font-family: inherit;
-  }
-  #stop-btn.visible { display: inline-block; }
-
-  /* error toast */
-  #error-toast {
-    display: none;
-    position: fixed;
-    bottom: 90px;
-    left: 50%;
-    transform: translateX(-50%);
-    background: rgba(247,108,108,0.15);
-    border: 0.5px solid rgba(247,108,108,0.3);
-    border-radius: var(--radius-sm);
-    color: var(--red);
-    font-size: 13px;
-    padding: 8px 16px;
-    z-index: 200;
-    max-width: 400px;
-    text-align: center;
-  }
-  #error-toast.show { display: block; }
-</style>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --bg:         #0f0f11;
+  --bg2:        #17171a;
+  --bg3:        #1e1e22;
+  --border:     rgba(255,255,255,0.08);
+  --border2:    rgba(255,255,255,0.14);
+  --text:       #e8e8ec;
+  --text2:      #9090a0;
+  --text3:      #5a5a6a;
+  --accent:     #7c6af7;
+  --accent2:    #9d8fff;
+  --accent-bg:  rgba(124,106,247,0.12);
+  --green:      #3ecf8e;
+  --red:        #f76c6c;
+  --r:          12px;
+  --rs:         8px;
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+/* ── header ── */
+header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 20px;
+  border-bottom: 0.5px solid var(--border);
+  background: var(--bg);
+  flex-shrink: 0;
+  position: relative;
+}
+.logo { font-size: 15px; font-weight: 600; letter-spacing: -0.02em; }
+.logo span { color: var(--accent2); }
+header .spacer { flex: 1; }
+
+/* model-status & perf badges */
+.model-status { font-size: 12px; color: var(--text3); white-space: nowrap; }
+.model-status.ok      { color: var(--green); }
+.model-status.loading { color: var(--accent2); }
+
+.perf-badges { display: flex; gap: 6px; align-items: center; }
+.perf-badge {
+  display: flex; align-items: center; gap: 4px;
+  background: var(--bg3); border: 0.5px solid var(--border2);
+  border-radius: 6px; padding: 3px 8px;
+  font-size: 11px; color: var(--text2); white-space: nowrap;
+}
+.perf-badge .badge-label { color: var(--text3); font-size: 10px; text-transform: uppercase; letter-spacing: .04em; }
+.perf-badge .badge-val   { font-weight: 500; color: var(--text); }
+
+/* custom model dropdown */
+.model-dropdown { position: relative; }
+.model-dropdown-btn {
+  display: flex; align-items: center; gap: 6px;
+  background: var(--bg3); border: 0.5px solid var(--border2);
+  border-radius: var(--rs); color: var(--text);
+  font-size: 13px; padding: 6px 10px;
+  cursor: pointer; min-width: 180px; max-width: 240px;
+  font-family: inherit; transition: border-color .15s;
+  white-space: nowrap; overflow: hidden;
+}
+.model-dropdown-btn:hover { border-color: rgba(124,106,247,.4); }
+.model-dropdown-btn.open  { border-color: var(--accent); }
+.model-dropdown-btn .btn-label { flex: 1; overflow: hidden; text-overflow: ellipsis; text-align: left; }
+.model-dropdown-btn .chevron   { flex-shrink: 0; transition: transform .2s; color: var(--text3); font-size: 10px; }
+.model-dropdown-btn.open .chevron { transform: rotate(180deg); }
+
+.model-dropdown-list {
+  display: none; position: absolute;
+  top: calc(100% + 6px); right: 0; z-index: 300;
+  background: var(--bg2); border: 0.5px solid var(--border2);
+  border-radius: var(--r); min-width: 320px; max-height: 420px;
+  overflow-y: auto; box-shadow: 0 16px 48px rgba(0,0,0,.5);
+}
+.model-dropdown-list::-webkit-scrollbar       { width: 4px; }
+.model-dropdown-list::-webkit-scrollbar-thumb { background: var(--bg3); border-radius: 4px; }
+.model-dropdown-list.open { display: block; }
+
+.dropdown-search {
+  padding: 10px 12px 8px; border-bottom: 0.5px solid var(--border);
+  position: sticky; top: 0; background: var(--bg2); z-index: 1;
+}
+.dropdown-search input {
+  width: 100%; background: var(--bg3); border: 0.5px solid var(--border2);
+  border-radius: var(--rs); color: var(--text); font-size: 12px;
+  padding: 6px 10px; outline: none; font-family: inherit;
+}
+.dropdown-search input:focus { border-color: var(--accent); }
+
+.dropdown-item {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 9px 14px; cursor: pointer; transition: background .1s; gap: 10px;
+}
+.dropdown-item:hover    { background: rgba(255,255,255,.04); }
+.dropdown-item.selected { background: var(--accent-bg); }
+.dropdown-item .item-name {
+  font-size: 13px; color: var(--text); flex: 1;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.dropdown-item .item-perf  { display: flex; gap: 5px; flex-shrink: 0; }
+.dropdown-item .item-stat  { display: flex; flex-direction: column; align-items: flex-end; gap: 1px; }
+.dropdown-item .stat-val   { font-size: 11px; font-weight: 500; color: var(--text2); line-height: 1; }
+.dropdown-item .stat-label { font-size: 9px; color: var(--text3); text-transform: uppercase; letter-spacing: .05em; line-height: 1; }
+.dropdown-item .stat-sep   { width: 0.5px; height: 22px; background: var(--border); flex-shrink: 0; margin: 0 2px; }
+.dropdown-loading { padding: 16px; text-align: center; font-size: 12px; color: var(--text3); }
+
+/* header buttons */
+.hdr-btn {
+  background: var(--bg3); border: 0.5px solid var(--border);
+  border-radius: var(--rs); color: var(--text2);
+  font-size: 13px; padding: 6px 12px;
+  cursor: pointer; font-family: inherit;
+  transition: border-color .15s, color .15s; white-space: nowrap;
+  display: flex; align-items: center; justify-content: center;
+}
+.hdr-btn:hover  { border-color: var(--border2); color: var(--text); }
+#settings-btn { width: 34px; height: 34px; font-size: 16px; padding: 0; }
+#new-chat-btn { background: transparent; }
+
+/* ── settings panel ── */
+#settings-panel {
+  display: none; position: absolute;
+  top: 58px; right: 20px; z-index: 400;
+  background: var(--bg2); border: 0.5px solid var(--border2);
+  border-radius: var(--r); padding: 16px; width: 320px;
+  box-shadow: 0 16px 48px rgba(0,0,0,.5);
+}
+#settings-panel.open { display: block; }
+
+.settings-title { font-size: 13px; font-weight: 500; margin-bottom: 12px; }
+.field-group    { margin-bottom: 14px; }
+.field-label    { font-size: 12px; color: var(--text2); margin-bottom: 6px; display: block; }
+
+.key-input-row { display: flex; gap: 8px; }
+input[type="text"], input[type="password"], textarea.sys-textarea {
+  background: var(--bg3); border: 0.5px solid var(--border2);
+  border-radius: var(--rs); color: var(--text);
+  font-size: 13px; padding: 8px 10px; width: 100%;
+  outline: none; transition: border-color .15s; font-family: inherit;
+}
+input[type="text"]:focus, input[type="password"]:focus, textarea.sys-textarea:focus {
+  border-color: var(--accent);
+}
+textarea.sys-textarea { min-height: 70px; resize: vertical; line-height: 1.5; }
+
+.btn-save {
+  background: var(--accent); border: none; border-radius: var(--rs);
+  color: #fff; font-size: 13px; padding: 8px 14px;
+  cursor: pointer; flex-shrink: 0; transition: opacity .15s; font-family: inherit;
+}
+.btn-save:hover { opacity: .9; }
+
+.api-hint { font-size: 11px; color: var(--text3); margin-top: 6px; line-height: 1.5; }
+.api-hint a { color: var(--accent2); text-decoration: none; }
+.api-hint a:hover { text-decoration: underline; }
+
+.unit-toggle { display: flex; border: 0.5px solid var(--border2); border-radius: var(--rs); overflow: hidden; width: fit-content; }
+.unit-btn {
+  background: transparent; border: none; color: var(--text3);
+  font-size: 12px; padding: 5px 14px; cursor: pointer;
+  font-family: inherit; transition: background .1s, color .1s;
+}
+.unit-btn:hover  { background: var(--bg3); color: var(--text); }
+.unit-btn.active { background: var(--accent); color: #fff; }
+
+/* ── messages ── */
+#messages {
+  flex: 1; overflow-y: auto;
+  padding: 24px 0; display: flex; flex-direction: column;
+  scroll-behavior: smooth;
+}
+#messages::-webkit-scrollbar       { width: 4px; }
+#messages::-webkit-scrollbar-track { background: transparent; }
+#messages::-webkit-scrollbar-thumb { background: var(--bg3); border-radius: 4px; }
+
+/* empty state */
+#empty-state {
+  flex: 1; display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  gap: 8px; color: var(--text3); font-size: 14px;
+  user-select: none; padding: 40px 20px; text-align: center;
+}
+#empty-state .big  { font-size: 28px; margin-bottom: 4px; }
+#empty-state .name { font-size: 17px; font-weight: 500; color: var(--text2); margin-bottom: 4px; }
+.no-key-notice {
+  background: rgba(247,108,108,.1); border: 0.5px solid rgba(247,108,108,.25);
+  border-radius: var(--rs); color: var(--red);
+  font-size: 12px; padding: 6px 12px; margin-top: 8px;
+}
+
+/* message rows */
+.msg-row { display: flex; padding: 10px 24px; gap: 14px; transition: background .1s; }
+.msg-row:hover { background: rgba(255,255,255,.015); }
+.msg-row.user  { flex-direction: row-reverse; }
+
+.avatar {
+  width: 30px; height: 30px; border-radius: 8px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 12px; font-weight: 600; flex-shrink: 0; margin-top: 2px;
+}
+.avatar.ai   { background: var(--accent-bg); color: var(--accent2); border: 0.5px solid rgba(124,106,247,.25); }
+.avatar.user { background: rgba(62,207,142,.12); color: var(--green); border: 0.5px solid rgba(62,207,142,.2); }
+
+.msg-bubble { max-width: min(72%, 640px); font-size: 14px; line-height: 1.75; color: var(--text); }
+.msg-row.user .msg-bubble {
+  background: var(--bg3); border: 0.5px solid var(--border);
+  border-radius: 12px 4px 12px 12px; padding: 10px 14px;
+}
+.msg-row.ai .msg-bubble { padding: 4px 0; }
+
+/* typing indicator */
+.typing-dot { display: inline-flex; gap: 4px; align-items: center; padding: 4px 0; }
+.typing-dot span {
+  width: 6px; height: 6px; border-radius: 50%;
+  background: var(--text3); animation: bounce 1.2s infinite;
+}
+.typing-dot span:nth-child(2) { animation-delay: .2s; }
+.typing-dot span:nth-child(3) { animation-delay: .4s; }
+@keyframes bounce {
+  0%, 60%, 100% { transform: translateY(0); }
+  30%           { transform: translateY(-5px); }
+}
+
+/* markdown */
+.msg-bubble p          { margin-bottom: 8px; }
+.msg-bubble p:last-child { margin-bottom: 0; }
+.msg-bubble h1         { font-size: 18px; font-weight: 600; margin: 12px 0 6px; }
+.msg-bubble h2         { font-size: 16px; font-weight: 600; margin: 12px 0 6px; }
+.msg-bubble h3         { font-size: 14px; font-weight: 600; margin: 12px 0 6px; }
+.msg-bubble strong     { font-weight: 600; }
+.msg-bubble ul, .msg-bubble ol { padding-left: 20px; margin-bottom: 8px; }
+.msg-bubble li         { margin-bottom: 3px; }
+.msg-bubble blockquote { border-left: 3px solid var(--accent); margin: 8px 0; padding: 4px 14px; color: var(--text2); }
+.msg-bubble hr         { border: none; border-top: 0.5px solid var(--border2); margin: 14px 0; }
+.msg-bubble code {
+  background: var(--bg3); border-radius: 4px;
+  padding: 1px 5px; font-size: 12.5px;
+  font-family: "SF Mono","Fira Code",monospace; color: var(--accent2);
+}
+.msg-bubble table {
+  border-collapse: collapse; margin: 10px 0;
+  font-size: 13px; display: block; overflow-x: auto;
+}
+.msg-bubble th, .msg-bubble td {
+  border: 0.5px solid var(--border2); padding: 7px 12px;
+  text-align: left; white-space: nowrap;
+}
+.msg-bubble th         { background: rgba(255,255,255,.05); font-weight: 500; }
+.msg-bubble tr:hover td { background: rgba(255,255,255,.02); }
+
+/* code block */
+.msg-bubble pre {
+  background: var(--bg3); border: 0.5px solid var(--border);
+  border-radius: var(--rs); padding: 0; overflow-x: auto;
+  font-size: 13px; margin: 8px 0;
+  font-family: "SF Mono","Fira Code",monospace; line-height: 1.6;
+}
+.code-header {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 6px 12px; background: rgba(255,255,255,.04);
+  border-bottom: 0.5px solid var(--border); position: sticky; left: 0;
+}
+.code-lang { font-size: 11px; color: var(--text3); font-family: "SF Mono","Fira Code",monospace; }
+.copy-btn {
+  background: transparent; border: 0.5px solid var(--border);
+  border-radius: 4px; color: var(--text3); font-size: 11px;
+  padding: 2px 8px; cursor: pointer; font-family: inherit;
+  transition: border-color .15s, color .15s; line-height: 1.6;
+}
+.copy-btn:hover  { border-color: var(--border2); color: var(--text2); }
+.copy-btn.copied { color: var(--green); border-color: rgba(62,207,142,.3); }
+.msg-bubble pre code {
+  display: block; padding: 12px 14px;
+  overflow: visible; min-width: max-content;
+  background: none; color: var(--text);
+  border-radius: 0; padding-left: 14px;
+}
+
+/* highlight.js */
+.hljs                  { background: transparent !important; padding: 0 !important; }
+.hljs-keyword          { color: #c792ea; }
+.hljs-string           { color: #c3e88d; }
+.hljs-comment          { color: #546e7a; font-style: italic; }
+.hljs-number           { color: #f78c6c; }
+.hljs-built_in         { color: #82aaff; }
+.hljs-title            { color: #82aaff; }
+.hljs-attr             { color: #ffcb6b; }
+.hljs-literal          { color: #ff5370; }
+.hljs-type             { color: #ffcb6b; }
+.hljs-variable         { color: #eeffff; }
+.hljs-params           { color: #eeffff; }
+.hljs-tag              { color: #f07178; }
+.hljs-name             { color: #f07178; }
+
+/* ── input area ── */
+#input-area {
+  padding: 14px 20px 20px; border-top: 0.5px solid var(--border);
+  background: var(--bg); flex-shrink: 0;
+}
+.input-box {
+  display: flex; align-items: flex-end; gap: 10px;
+  background: var(--bg2); border: 0.5px solid var(--border2);
+  border-radius: 14px; padding: 10px 12px; transition: border-color .15s;
+}
+.input-box:focus-within { border-color: rgba(124,106,247,.4); }
+#user-input {
+  flex: 1; background: none; border: none; outline: none;
+  color: var(--text); font-size: 14px; font-family: inherit;
+  line-height: 1.6; resize: none;
+  max-height: 160px; min-height: 22px; overflow-y: auto;
+}
+#user-input::placeholder         { color: var(--text3); }
+#user-input::-webkit-scrollbar       { width: 3px; }
+#user-input::-webkit-scrollbar-thumb { background: var(--bg3); border-radius: 3px; }
+
+#send-btn {
+  background: var(--accent); border: none; border-radius: 8px;
+  width: 34px; height: 34px; display: flex;
+  align-items: center; justify-content: center;
+  cursor: pointer; flex-shrink: 0;
+  transition: opacity .15s, transform .1s; color: #fff;
+}
+#send-btn:hover    { opacity: .9; }
+#send-btn:active   { transform: scale(.95); }
+#send-btn:disabled { opacity: .35; cursor: not-allowed; }
+#send-btn svg      { width: 16px; height: 16px; }
+
+.input-footer {
+  display: flex; justify-content: space-between;
+  align-items: center; margin-top: 8px; padding: 0 2px;
+}
+.input-hint { font-size: 11px; color: var(--text3); }
+#stop-btn {
+  display: none;
+  background: rgba(247,108,108,.1); border: 0.5px solid rgba(247,108,108,.25);
+  border-radius: var(--rs); color: var(--red);
+  font-size: 12px; padding: 4px 10px; cursor: pointer; font-family: inherit;
+}
+#stop-btn.visible { display: inline-block; }
+
+/* toast */
+#toast {
+  display: none; position: fixed;
+  bottom: 90px; left: 50%; transform: translateX(-50%);
+  border-radius: var(--rs); font-size: 13px;
+  padding: 8px 16px; z-index: 500;
+  max-width: 400px; text-align: center;
+}
+#toast.show { display: block; }
+</style>
 </head>
 <body>
 
@@ -686,9 +373,7 @@
   <div class="logo">Open<span>Router</span> Chat</div>
   <div class="spacer"></div>
   <div class="model-status" id="model-status">モデル未選択</div>
-  <div class="perf-badges" id="perf-badges" style="display:none;">
-    <div class="perf-badge loading-badge" id="perf-loading">取得中…</div>
-  </div>
+  <div class="perf-badges" id="perf-badges" style="display:none;"></div>
   <div class="model-dropdown" id="model-dropdown">
     <button class="model-dropdown-btn" id="model-dropdown-btn">
       <span class="btn-label" id="model-btn-label">── モデルを選択 ──</span>
@@ -703,59 +388,51 @@
       </div>
     </div>
   </div>
-  <button id="new-chat-btn" title="会話をリセット">新しい会話</button>
-  <button id="settings-btn" title="設定">⚙</button>
+  <button class="hdr-btn" id="new-chat-btn">新しい会話</button>
+  <button class="hdr-btn" id="settings-btn">⚙</button>
+
+  <div id="settings-panel">
+    <div class="settings-title">設定</div>
+    <div class="field-group">
+      <label class="field-label" for="api-key-input">OpenRouter APIキー</label>
+      <div class="key-input-row">
+        <input type="text" id="api-key-input" placeholder="sk-or-v1-..." autocomplete="off" style="font-family:monospace;font-size:12px;">
+        <button class="btn-save" id="save-key-btn">保存</button>
+      </div>
+      <p class="api-hint">
+        <a href="https://openrouter.ai/keys" target="_blank">openrouter.ai/keys</a> から取得できます。ブラウザのローカルストレージに保存されます。
+      </p>
+    </div>
+    <div class="field-group">
+      <label class="field-label">レイテンシー表示単位</label>
+      <div class="unit-toggle">
+        <button class="unit-btn" id="unit-ms" onclick="setLatencyUnit('ms')">ms</button>
+        <button class="unit-btn" id="unit-s"  onclick="setLatencyUnit('s')">s</button>
+      </div>
+    </div>
+    <div class="field-group">
+      <label class="field-label" for="sys-prompt-input">システムプロンプト（任意）</label>
+      <textarea class="sys-textarea" id="sys-prompt-input" placeholder="例: You are a helpful assistant. Answer in Japanese."></textarea>
+    </div>
+    <button class="btn-save" id="save-settings-btn" style="width:100%;margin-top:4px;">設定を保存</button>
+  </div>
 </header>
 
-<!-- settings panel -->
-<div id="settings-panel">
-  <div class="settings-title">設定</div>
-
-  <div class="field-group">
-    <label class="field-label" for="api-key-input">OpenRouter APIキー</label>
-    <div class="key-input-row">
-      <input type="text" id="api-key-input" placeholder="sk-or-v1-..." autocomplete="off" style="font-family:monospace;font-size:12px;">
-      <button class="btn-save" id="save-key-btn">保存</button>
-    </div>
-    <p class="api-hint">
-      APIキーは <a href="https://openrouter.ai/keys" target="_blank">openrouter.ai/keys</a> から取得できます。<br>
-      このキーはブラウザのローカルストレージのみに保存されます。
-    </p>
-  </div>
-
-  <div class="field-group">
-    <label class="field-label">レイテンシー表示単位</label>
-    <div style="display:flex;gap:0;border:0.5px solid var(--border2);border-radius:var(--radius-sm);overflow:hidden;width:fit-content;">
-      <button id="unit-ms" class="unit-btn" onclick="setLatencyUnit('ms')">ms</button>
-      <button id="unit-s"  class="unit-btn" onclick="setLatencyUnit('s')">s</button>
-    </div>
-  </div>
-
-  <div class="field-group">
-    <label class="field-label" for="sys-prompt-input">システムプロンプト（任意）</label>
-    <textarea class="sys-textarea" id="sys-prompt-input" placeholder="例: You are a helpful assistant. Answer in Japanese."></textarea>
-  </div>
-
-  <button class="btn-save" id="save-settings-btn" style="width:100%;margin-top:4px;">設定を保存</button>
-</div>
-
-<!-- messages -->
 <div id="messages">
   <div id="empty-state">
     <div class="big">✦</div>
     <div class="name">OpenRouter Chat</div>
     <div>モデルを選択してメッセージを送信してください</div>
-    <div id="no-key-notice" class="no-key" style="display:none;">⚠ APIキーが設定されていません — 右上の ⚙ から設定してください</div>
+    <div id="no-key-notice" class="no-key-notice" style="display:none;">⚠ APIキーが設定されていません — 右上の ⚙ から設定してください</div>
   </div>
 </div>
 
 <div id="input-area">
   <div class="input-box">
     <textarea id="user-input" placeholder="メッセージを入力..." rows="1"></textarea>
-    <button id="send-btn" title="送信" disabled>
+    <button id="send-btn" disabled>
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-        <line x1="22" y1="2" x2="11" y2="13"></line>
-        <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
+        <line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/>
       </svg>
     </button>
   </div>
@@ -765,81 +442,57 @@
   </div>
 </div>
 
-<div id="error-toast"></div>
+<div id="toast"></div>
 
 <script>
+/* ═══════════════════════════════════════════
+   State
+═══════════════════════════════════════════ */
 const $ = id => document.getElementById(id);
 
-/* ─────── state ─────── */
-let apiKey = localStorage.getItem('or_api_key') || '';
-let systemPrompt = localStorage.getItem('or_sys_prompt') || '';
-let messages = [];           // {role, content}
-let isStreaming = false;
-let abortController = null;
-let currentModel = localStorage.getItem('or_model') || '';
+let apiKey      = localStorage.getItem('or_api_key')      || '';
+let systemPrompt= localStorage.getItem('or_sys_prompt')   || '';
+let currentModel= localStorage.getItem('or_model')        || '';
 let latencyUnit = localStorage.getItem('or_latency_unit') || 'ms';
+let freeModels  = [];   // { id, name, ttft, tps }
+let messages    = [];   // { role, content }
+let isStreaming  = false;
+let abortCtrl   = null;
+let toastTimer  = null;
 
-/* ─────── init ─────── */
-$('api-key-input').value = apiKey;
-$('sys-prompt-input').value = systemPrompt;
+/* ═══════════════════════════════════════════
+   Init
+═══════════════════════════════════════════ */
+$('api-key-input').value   = apiKey;
+$('sys-prompt-input').value= systemPrompt;
 if (!apiKey) $('no-key-notice').style.display = 'block';
-
-loadModels();
 updateUnitBtns();
+updateSendBtn();
+loadModels();
 
-/* ─────── settings panel ─────── */
-$('settings-btn').onclick = e => {
+/* ═══════════════════════════════════════════
+   Settings panel
+═══════════════════════════════════════════ */
+$('settings-btn').addEventListener('click', e => {
   e.stopPropagation();
-  // 開くたびに最新のlocalStorageから再反映
-  const stored = localStorage.getItem('or_api_key') || '';
-  if (stored) { apiKey = stored; $('api-key-input').value = stored; }
+  $('api-key-input').value = localStorage.getItem('or_api_key') || '';
   $('settings-panel').classList.toggle('open');
-};
+});
+
 document.addEventListener('click', e => {
-  if (!$('settings-panel').contains(e.target) && e.target !== $('settings-btn')) {
+  if (!$('settings-panel').contains(e.target) && e.target !== $('settings-btn'))
     $('settings-panel').classList.remove('open');
-  }
+  if (!$('model-dropdown').contains(e.target))
+    closeDropdown();
 });
 
 function saveSettings() {
-  apiKey = $('api-key-input').value.trim();
+  apiKey       = $('api-key-input').value.trim();
   systemPrompt = $('sys-prompt-input').value.trim();
-  localStorage.setItem('or_api_key', apiKey);
+  localStorage.setItem('or_api_key',    apiKey);
   localStorage.setItem('or_sys_prompt', systemPrompt);
   $('no-key-notice').style.display = apiKey ? 'none' : 'block';
   updateSendBtn();
-}
-
-function fmtTTFT(ms) {
-  if (ms === null) return '—';
-  if (latencyUnit === 's') return (ms / 1000).toFixed(1) + ' s';
-  return Math.round(ms) + ' ms';
-}
-
-function setLatencyUnit(unit) {
-  latencyUnit = unit;
-  localStorage.setItem('or_latency_unit', unit);
-  updateUnitBtns();
-  // ドロップダウン内の全TTFT要素を再描画
-  freeModels.forEach(m => {
-    const key = m.id.replace(/[^a-z0-9]/gi,'_');
-    const el = document.getElementById('dd-ttft-' + key);
-    if (el) el.textContent = fmtTTFT(m.ttft);
-  });
-  // ヘッダーバッジも更新
-  const badgeEl = $('perf-badges').querySelector('.badge-val');
-  if (badgeEl && currentModel) {
-    const m = freeModels.find(m => m.id === currentModel);
-    if (m) {
-      const ttftBadge = $('perf-badges').querySelector('[data-type="ttft"]');
-      if (ttftBadge) ttftBadge.textContent = fmtTTFT(m.ttft);
-    }
-  }
-}
-
-function updateUnitBtns() {
-  $('unit-ms').classList.toggle('active', latencyUnit === 'ms');
-  $('unit-s').classList.toggle('active', latencyUnit === 's');
 }
 
 $('api-key-input').addEventListener('input', () => {
@@ -849,137 +502,62 @@ $('api-key-input').addEventListener('input', () => {
   updateSendBtn();
 });
 
-$('save-key-btn').onclick = () => {
+$('save-key-btn').addEventListener('click', () => {
   saveSettings();
   showToast('APIキーを保存しました', false);
   $('settings-panel').classList.remove('open');
   if (apiKey) loadModels();
-};
+});
 
-$('save-settings-btn').onclick = () => {
+$('save-settings-btn').addEventListener('click', () => {
   saveSettings();
   showToast('設定を保存しました', false);
   $('settings-panel').classList.remove('open');
   if (apiKey) loadModels();
-};
+});
 
-/* ─────── load free models ─────── */
-let freeModels = [];   // {id, name, ttft, tps}  (perf filled in lazily)
-
-async function loadModels() {
-  const status = $('model-status');
-  const items = $('model-dropdown-items');
-  status.className = 'model-status loading';
-  status.textContent = '読み込み中…';
-  items.innerHTML = '<div class="dropdown-loading">読み込み中…</div>';
-
-  try {
-    const res = await fetch('https://openrouter.ai/api/v1/models', {
-      headers: apiKey ? { 'Authorization': 'Bearer ' + apiKey } : {}
-    });
-    const data = await res.json();
-
-    freeModels = (data.data || [])
-      .filter(m => {
-        const p = m.pricing;
-        return p && parseFloat(p.prompt) === 0 && parseFloat(p.completion) === 0;
-      })
-      .sort((a, b) => (a.name || a.id).localeCompare(b.name || b.id))
-      .map(m => ({ id: m.id, name: m.name || m.id, ttft: null, tps: null }));
-
-    if (freeModels.length === 0) {
-      items.innerHTML = '<div class="dropdown-loading">無料モデルが見つかりません</div>';
-      status.textContent = '無料モデルなし';
-      status.className = 'model-status';
-      return;
-    }
-
-    renderDropdownItems(freeModels, '');
-
-    if (currentModel && freeModels.find(m => m.id === currentModel)) {
-      const m = freeModels.find(m => m.id === currentModel);
-      $('model-btn-label').textContent = m.name;
-      status.textContent = '✓ ' + m.name;
-      status.className = 'model-status ok';
-      fetchModelPerf(currentModel, true);
-    } else {
-      status.textContent = freeModels.length + ' 件の無料モデル';
-      status.className = 'model-status';
-    }
-
-    updateSendBtn();
-
-    // バックグラウンドで全モデルのperf取得
-    fetchAllPerf();
-
-  } catch (err) {
-    items.innerHTML = '<div class="dropdown-loading">読み込み失敗</div>';
-    status.textContent = 'エラー';
-    status.className = 'model-status';
-  }
+/* ═══════════════════════════════════════════
+   Latency unit
+═══════════════════════════════════════════ */
+function fmtTTFT(ms) {
+  if (ms === null) return '—';
+  return latencyUnit === 's' ? (ms / 1000).toFixed(1) + ' s' : Math.round(ms) + ' ms';
 }
 
-function renderDropdownItems(models, query) {
-  const items = $('model-dropdown-items');
-  const q = query.toLowerCase();
-  const filtered = q ? models.filter(m => m.name.toLowerCase().includes(q) || m.id.toLowerCase().includes(q)) : models;
-
-  if (filtered.length === 0) {
-    items.innerHTML = '<div class="dropdown-loading">一致するモデルなし</div>';
-    return;
-  }
-
-  items.innerHTML = filtered.map(m => {
-    const ttftStr = fmtTTFT(m.ttft);
-    const tpsStr  = m.tps  !== null ? m.tps.toFixed(1)  : '—';
-    const sel = m.id === currentModel ? ' selected' : '';
-    return `<div class="dropdown-item${sel}" data-id="${m.id}">
-      <span class="item-name">${m.name}</span>
-      <div class="item-perf">
-        <div class="item-stat">
-          <span class="stat-val" id="dd-ttft-${m.id.replace(/[^a-z0-9]/gi,'_')}">${ttftStr}</span>
-          <span class="stat-label">TTFT</span>
-        </div>
-        <div class="stat-sep"></div>
-        <div class="item-stat">
-          <span class="stat-val" id="dd-tps-${m.id.replace(/[^a-z0-9]/gi,'_')}">${tpsStr}</span>
-          <span class="stat-label">TPS</span>
-        </div>
-      </div>
-    </div>`;
-  }).join('');
-
-  items.querySelectorAll('.dropdown-item').forEach(el => {
-    el.addEventListener('click', () => {
-      currentModel = el.dataset.id;
-      localStorage.setItem('or_model', currentModel);
-      const m = freeModels.find(m => m.id === currentModel);
-      $('model-btn-label').textContent = m ? m.name : currentModel;
-      $('model-status').textContent = '✓ ' + (m ? m.name : currentModel);
-      $('model-status').className = 'model-status ok';
-      closeDropdown();
-      updateSendBtn();
-      fetchModelPerf(currentModel, true);
-      renderDropdownItems(freeModels, $('model-search').value);
-    });
+function setLatencyUnit(unit) {
+  latencyUnit = unit;
+  localStorage.setItem('or_latency_unit', unit);
+  updateUnitBtns();
+  // ドロップダウン内を再描画
+  freeModels.forEach(m => {
+    const el = document.getElementById('dd-ttft-' + safeId(m.id));
+    if (el) el.textContent = fmtTTFT(m.ttft);
   });
+  // ヘッダーバッジ再描画
+  const cur = freeModels.find(m => m.id === currentModel);
+  if (cur) updatePerfBadges(cur.ttft, cur.tps);
 }
 
-/* ドロップダウン開閉 */
+function updateUnitBtns() {
+  $('unit-ms').classList.toggle('active', latencyUnit === 'ms');
+  $('unit-s').classList.toggle('active',  latencyUnit === 's');
+}
+
+/* ═══════════════════════════════════════════
+   Model dropdown
+═══════════════════════════════════════════ */
 $('model-dropdown-btn').addEventListener('click', e => {
   e.stopPropagation();
-  const list = $('model-dropdown-list');
-  const btn  = $('model-dropdown-btn');
-  const isOpen = list.classList.contains('open');
+  const isOpen = $('model-dropdown-list').classList.contains('open');
   if (isOpen) { closeDropdown(); } else {
-    list.classList.add('open');
-    btn.classList.add('open');
+    $('model-dropdown-list').classList.add('open');
+    $('model-dropdown-btn').classList.add('open');
     $('model-search').focus();
   }
 });
 
-document.addEventListener('click', e => {
-  if (!$('model-dropdown').contains(e.target)) closeDropdown();
+$('model-search').addEventListener('input', () => {
+  renderDropdownItems($('model-search').value);
 });
 
 function closeDropdown() {
@@ -987,123 +565,211 @@ function closeDropdown() {
   $('model-dropdown-btn').classList.remove('open');
 }
 
-$('model-search').addEventListener('input', () => {
-  renderDropdownItems(freeModels, $('model-search').value);
-});
+function safeId(id) { return id.replace(/[^a-z0-9]/gi, '_'); }
 
-/* ─────── perf fetch ─────── */
-async function fetchModelPerf(modelId, updateHeader) {
-  try {
-    const parts = modelId.replace(/:free$/, '').split('/');
-    const author = parts[0];
-    const slug = parts.slice(1).join('/');
-    const res = await fetch(`https://openrouter.ai/api/v1/models/${author}/${slug}/endpoints`, {
-      headers: apiKey ? { 'Authorization': 'Bearer ' + apiKey } : {}
-    });
-    if (!res.ok) return;
-    const data = await res.json();
-    const endpoints = data?.data?.endpoints || [];
-    if (!endpoints.length) return;
+function renderDropdownItems(query) {
+  const q = query.toLowerCase();
+  const list = q
+    ? freeModels.filter(m => m.name.toLowerCase().includes(q) || m.id.toLowerCase().includes(q))
+    : freeModels;
 
-    let latSum = 0, tpsSum = 0, latCount = 0, tpsCount = 0;
-    for (const ep of endpoints) {
-      if (ep.latency_last_30m?.p50 != null)    { latSum += ep.latency_last_30m.p50;    latCount++; }
-      if (ep.throughput_last_30m?.p50 != null) { tpsSum += ep.throughput_last_30m.p50; tpsCount++; }
-    }
-    const ttft = latCount ? latSum / latCount : null;
-    const tps  = tpsCount ? tpsSum / tpsCount : null;
+  if (!list.length) {
+    $('model-dropdown-items').innerHTML = '<div class="dropdown-loading">一致するモデルなし</div>';
+    return;
+  }
 
-    // freeModels に保存
-    const m = freeModels.find(m => m.id === modelId);
-    if (m) { m.ttft = ttft; m.tps = tps; }
+  $('model-dropdown-items').innerHTML = list.map(m => `
+    <div class="dropdown-item${m.id === currentModel ? ' selected' : ''}" data-id="${m.id}">
+      <span class="item-name">${m.name}</span>
+      <div class="item-perf">
+        <div class="item-stat">
+          <span class="stat-val" id="dd-ttft-${safeId(m.id)}">${fmtTTFT(m.ttft)}</span>
+          <span class="stat-label">TTFT</span>
+        </div>
+        <div class="stat-sep"></div>
+        <div class="item-stat">
+          <span class="stat-val" id="dd-tps-${safeId(m.id)}">${m.tps !== null ? m.tps.toFixed(1) : '—'}</span>
+          <span class="stat-label">TPS</span>
+        </div>
+      </div>
+    </div>`).join('');
 
-    // ドロップダウン内の該当行を更新
-    const key = modelId.replace(/[^a-z0-9]/gi,'_');
-    const ttftEl = document.getElementById('dd-ttft-' + key);
-    const tpsEl  = document.getElementById('dd-tps-'  + key);
-    if (ttftEl) ttftEl.textContent = fmtTTFT(ttft);
-    if (tpsEl)  tpsEl.textContent  = tps  !== null ? tps.toFixed(1)         : '—';
-
-    // ヘッダーバッジ更新
-    if (updateHeader) {
-      const badges = $('perf-badges');
-      badges.style.display = 'flex';
-      badges.innerHTML = '';
-      if (ttft !== null) badges.innerHTML += `<div class="perf-badge"><span class="badge-label">TTFT</span><span class="badge-val" data-type="ttft">${fmtTTFT(ttft)}</span></div>`;
-      if (tps  !== null) badges.innerHTML += `<div class="perf-badge"><span class="badge-label">TPS</span><span class="badge-val">${tps.toFixed(1)}</span></div>`;
-      if (!badges.innerHTML) badges.style.display = 'none';
-    }
-  } catch {}
+  $('model-dropdown-items').querySelectorAll('.dropdown-item').forEach(el => {
+    el.addEventListener('click', () => selectModel(el.dataset.id));
+  });
 }
 
-async function fetchAllPerf() {
-  // 並列でまとめて取得（最大8並列）
-  const BATCH = 8;
-  for (let i = 0; i < freeModels.length; i += BATCH) {
-    const batch = freeModels.slice(i, i + BATCH);
-    await Promise.all(batch.map(m => fetchModelPerf(m.id, false)));
+function selectModel(id) {
+  currentModel = id;
+  localStorage.setItem('or_model', id);
+  const m = freeModels.find(m => m.id === id);
+  $('model-btn-label').textContent  = m ? m.name : id;
+  $('model-status').textContent     = '✓ ' + (m ? m.name : id);
+  $('model-status').className       = 'model-status ok';
+  closeDropdown();
+  updateSendBtn();
+  renderDropdownItems($('model-search').value);
+  fetchModelPerf(id, true);
+}
+
+/* ═══════════════════════════════════════════
+   Load models
+═══════════════════════════════════════════ */
+async function loadModels() {
+  $('model-status').className   = 'model-status loading';
+  $('model-status').textContent = '読み込み中…';
+  $('model-dropdown-items').innerHTML = '<div class="dropdown-loading">読み込み中…</div>';
+
+  try {
+    const res  = await fetch('https://openrouter.ai/api/v1/models',
+      { headers: apiKey ? { Authorization: 'Bearer ' + apiKey } : {} });
+    const data = await res.json();
+
+    freeModels = (data.data || [])
+      .filter(m => { const p = m.pricing; return p && parseFloat(p.prompt) === 0 && parseFloat(p.completion) === 0; })
+      .sort((a, b) => (a.name || a.id).localeCompare(b.name || b.id))
+      .map(m => ({ id: m.id, name: m.name || m.id, ttft: null, tps: null }));
+
+    if (!freeModels.length) {
+      $('model-dropdown-items').innerHTML = '<div class="dropdown-loading">無料モデルが見つかりません</div>';
+      $('model-status').textContent = '無料モデルなし';
+      $('model-status').className   = 'model-status';
+      return;
+    }
+
+    renderDropdownItems('');
+
+    const saved = freeModels.find(m => m.id === currentModel);
+    if (saved) {
+      $('model-btn-label').textContent = saved.name;
+      $('model-status').textContent    = '✓ ' + saved.name;
+      $('model-status').className      = 'model-status ok';
+      fetchModelPerf(currentModel, true);
+    } else {
+      $('model-status').textContent = freeModels.length + ' 件の無料モデル';
+      $('model-status').className   = 'model-status';
+    }
+
+    updateSendBtn();
+    fetchAllPerf();
+  } catch {
+    $('model-dropdown-items').innerHTML = '<div class="dropdown-loading">読み込み失敗</div>';
+    $('model-status').textContent = 'エラー';
+    $('model-status').className   = 'model-status';
   }
 }
 
-function updateSendBtn() {
-  const canSend = apiKey && currentModel && !isStreaming;
-  $('send-btn').disabled = !canSend;
+/* ═══════════════════════════════════════════
+   Perf fetch
+═══════════════════════════════════════════ */
+async function fetchModelPerf(modelId, updateHeader) {
+  try {
+    const base = modelId.replace(/:free$/, '').split('/');
+    const url  = `https://openrouter.ai/api/v1/models/${base[0]}/${base.slice(1).join('/')}/endpoints`;
+    const res  = await fetch(url, { headers: apiKey ? { Authorization: 'Bearer ' + apiKey } : {} });
+    if (!res.ok) return;
+    const data = await res.json();
+    const eps  = data?.data?.endpoints || [];
+    if (!eps.length) return;
+
+    let lSum = 0, tSum = 0, lN = 0, tN = 0;
+    for (const ep of eps) {
+      if (ep.latency_last_30m?.p50    != null) { lSum += ep.latency_last_30m.p50;    lN++; }
+      if (ep.throughput_last_30m?.p50 != null) { tSum += ep.throughput_last_30m.p50; tN++; }
+    }
+    const ttft = lN ? lSum / lN : null;
+    const tps  = tN ? tSum / tN : null;
+
+    const m = freeModels.find(m => m.id === modelId);
+    if (m) { m.ttft = ttft; m.tps = tps; }
+
+    const key    = safeId(modelId);
+    const ttftEl = document.getElementById('dd-ttft-' + key);
+    const tpsEl  = document.getElementById('dd-tps-'  + key);
+    if (ttftEl) ttftEl.textContent = fmtTTFT(ttft);
+    if (tpsEl)  tpsEl.textContent  = tps !== null ? tps.toFixed(1) : '—';
+
+    if (updateHeader) updatePerfBadges(ttft, tps);
+  } catch {}
 }
 
-/* ─────── new chat ─────── */
-$('new-chat-btn').onclick = () => {
+function updatePerfBadges(ttft, tps) {
+  const el = $('perf-badges');
+  el.innerHTML = '';
+  if (ttft !== null) el.innerHTML += `<div class="perf-badge"><span class="badge-label">TTFT</span><span class="badge-val" id="badge-ttft">${fmtTTFT(ttft)}</span></div>`;
+  if (tps  !== null) el.innerHTML += `<div class="perf-badge"><span class="badge-label">TPS</span><span class="badge-val">${tps.toFixed(1)}</span></div>`;
+  el.style.display = el.innerHTML ? 'flex' : 'none';
+}
+
+async function fetchAllPerf() {
+  const BATCH = 8;
+  for (let i = 0; i < freeModels.length; i += BATCH)
+    await Promise.all(freeModels.slice(i, i + BATCH).map(m => fetchModelPerf(m.id, false)));
+}
+
+/* ═══════════════════════════════════════════
+   New chat
+═══════════════════════════════════════════ */
+$('new-chat-btn').addEventListener('click', () => {
   messages = [];
-  const container = $('messages');
-  container.innerHTML = `
+  $('messages').innerHTML = `
     <div id="empty-state">
       <div class="big">✦</div>
       <div class="name">OpenRouter Chat</div>
       <div>モデルを選択してメッセージを送信してください</div>
-      <div id="no-key-notice" class="no-key" style="display:${apiKey ? 'none' : 'block'};">⚠ APIキーが設定されていません — 右上の ⚙ から設定してください</div>
+      <div id="no-key-notice" class="no-key-notice" style="display:${apiKey ? 'none' : 'block'};">
+        ⚠ APIキーが設定されていません — 右上の ⚙ から設定してください
+      </div>
     </div>`;
-};
+});
 
-/* ─────── textarea auto-resize ─────── */
+/* ═══════════════════════════════════════════
+   Input
+═══════════════════════════════════════════ */
 const textarea = $('user-input');
 textarea.addEventListener('input', () => {
   textarea.style.height = 'auto';
   textarea.style.height = Math.min(textarea.scrollHeight, 160) + 'px';
 });
-
 textarea.addEventListener('keydown', e => {
-  if (e.key === 'Enter' && !e.shiftKey) {
-    e.preventDefault();
-    if (!$('send-btn').disabled) sendMessage();
-  }
+  if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); if (!$('send-btn').disabled) sendMessage(); }
 });
+$('send-btn').addEventListener('click', sendMessage);
+$('stop-btn').addEventListener('click', () => { if (abortCtrl) abortCtrl.abort(); });
 
-$('send-btn').onclick = sendMessage;
+function updateSendBtn() {
+  $('send-btn').disabled = !(apiKey && currentModel && !isStreaming);
+}
 
-/* ─────── stop ─────── */
-$('stop-btn').onclick = () => {
-  if (abortController) abortController.abort();
-};
-
-/* ─────── send ─────── */
+/* ═══════════════════════════════════════════
+   Send message
+═══════════════════════════════════════════ */
 async function sendMessage() {
   const text = textarea.value.trim();
   if (!text || isStreaming) return;
 
-  hideEmptyState();
+  // clear empty state
+  const es = $('empty-state');
+  if (es) es.remove();
 
   messages.push({ role: 'user', content: text });
   appendMessage('user', text);
-
   textarea.value = '';
   textarea.style.height = 'auto';
 
-  const aiRow = appendMessage('ai', '', true);
+  const aiRow  = appendMessage('ai', '', true);
   const bubble = aiRow.querySelector('.msg-bubble');
 
   isStreaming = true;
+  abortCtrl   = new AbortController();
   updateSendBtn();
   $('stop-btn').classList.add('visible');
-  abortController = new AbortController();
+
+  if (!apiKey) {
+    bubble.innerHTML = '<span style="color:var(--red);">APIキーが設定されていません。⚙ から設定してください。</span>';
+    finishStream();
+    return;
+  }
 
   const payload = {
     model: currentModel,
@@ -1116,100 +782,86 @@ async function sendMessage() {
 
   let fullText = '';
 
-  if (!apiKey) {
-    bubble.innerHTML = '<span style="color:var(--red);">APIキーが設定されていません。⚙ から設定してください。</span>';
-    isStreaming = false;
-    updateSendBtn();
-    $('stop-btn').classList.remove('visible');
-    return;
-  }
-
   try {
     const res = await fetch('https://openrouter.ai/api/v1/chat/completions', {
       method: 'POST',
       headers: {
-        'Authorization': 'Bearer ' + apiKey,
-        'Content-Type': 'application/json',
-        'HTTP-Referer': location.href,
-        'X-Title': 'OpenRouter Chat'
+        'Authorization':  'Bearer ' + apiKey,
+        'Content-Type':   'application/json',
+        'HTTP-Referer':   location.href,
+        'X-Title':        'OpenRouter Chat'
       },
-      body: JSON.stringify(payload),
-      signal: abortController.signal
+      body:   JSON.stringify(payload),
+      signal: abortCtrl.signal
     });
 
     if (!res.ok) {
       const err = await res.json().catch(() => ({}));
-      throw new Error((err.error?.message) || `HTTP ${res.status}`);
+      throw new Error(err.error?.message || 'HTTP ' + res.status);
     }
 
-    const reader = res.body.getReader();
+    const reader  = res.body.getReader();
     const decoder = new TextDecoder();
     bubble.innerHTML = '<div class="typing-dot"><span></span><span></span><span></span></div>';
-
-    let buf = '';
-    let started = false;
+    let buf = '', started = false;
 
     while (true) {
       const { done, value } = await reader.read();
       if (done) break;
       buf += decoder.decode(value, { stream: true });
-
       const lines = buf.split('\n');
       buf = lines.pop();
-
       for (const line of lines) {
         if (!line.startsWith('data: ')) continue;
         const chunk = line.slice(6).trim();
         if (chunk === '[DONE]') break;
         try {
-          const obj = JSON.parse(chunk);
-          const delta = obj.choices?.[0]?.delta?.content;
+          const delta = JSON.parse(chunk).choices?.[0]?.delta?.content;
           if (delta) {
             if (!started) { bubble.innerHTML = ''; started = true; }
             fullText += delta;
             bubble.innerHTML = renderMarkdown(fullText);
-            highlightAll(bubble);
+            highlightNew(bubble);
             scrollBottom();
           }
         } catch {}
       }
     }
-
     messages.push({ role: 'assistant', content: fullText });
 
   } catch (err) {
     if (err.name === 'AbortError') {
       if (fullText) {
         bubble.innerHTML = renderMarkdown(fullText) + '<br><span style="color:var(--text3);font-size:12px;">— 停止しました</span>';
-        highlightAll(bubble);
+        highlightNew(bubble);
         messages.push({ role: 'assistant', content: fullText });
       } else {
         aiRow.remove();
         messages.pop();
       }
     } else {
-      bubble.innerHTML = `<span style="color:var(--red);">エラー: ${escHtml(err.message)}</span>`;
+      bubble.innerHTML = '<span style="color:var(--red);">エラー: ' + escHtml(err.message) + '</span>';
       messages.pop();
       showToast('エラー: ' + err.message, true);
     }
   } finally {
-    isStreaming = false;
-    abortController = null;
-    updateSendBtn();
-    $('stop-btn').classList.remove('visible');
-    scrollBottom();
+    finishStream();
   }
 }
 
-/* ─────── DOM helpers ─────── */
-function hideEmptyState() {
-  const es = $('empty-state');
-  if (es) es.remove();
+function finishStream() {
+  isStreaming = false;
+  abortCtrl   = null;
+  updateSendBtn();
+  $('stop-btn').classList.remove('visible');
+  scrollBottom();
 }
 
+/* ═══════════════════════════════════════════
+   DOM helpers
+═══════════════════════════════════════════ */
 function appendMessage(role, text, streaming = false) {
-  const container = $('messages');
-  const row = document.createElement('div');
+  const row    = document.createElement('div');
   row.className = 'msg-row ' + role;
 
   const avatar = document.createElement('div');
@@ -1222,16 +874,14 @@ function appendMessage(role, text, streaming = false) {
   if (streaming) {
     bubble.innerHTML = '<div class="typing-dot"><span></span><span></span><span></span></div>';
   } else {
-    if (role === 'user') {
-      bubble.textContent = text;
-    } else {
-      bubble.innerHTML = renderMarkdown(text);
-    }
+    role === 'user'
+      ? (bubble.textContent = text)
+      : (bubble.innerHTML   = renderMarkdown(text));
   }
 
   row.appendChild(avatar);
   row.appendChild(bubble);
-  container.appendChild(row);
+  $('messages').appendChild(row);
   scrollBottom(true);
   return row;
 }
@@ -1240,44 +890,88 @@ function isAtBottom() {
   const c = $('messages');
   return c.scrollHeight - c.scrollTop - c.clientHeight < 60;
 }
-
 function scrollBottom(force = false) {
   const c = $('messages');
   if (force || isAtBottom()) c.scrollTop = c.scrollHeight;
 }
 
-/* ─────── minimal markdown renderer ─────── */
-function renderMarkdown(text) {
-  let h = escHtml(text);
-  // code blocks
-  h = h.replace(/```([\w]*)\n?([\s\S]*?)```/g, (_, lang, code) => {
-    const id = 'cb' + Math.random().toString(36).slice(2,8);
-    const langLabel = lang || 'code';
-    return `<pre><div class="code-header"><span class="code-lang">${langLabel}</span><button class="copy-btn" onclick="copyCode('${id}')">コピー</button></div><code id="${id}" class="language-${lang || 'plaintext'}">${code.trim()}</code></pre>`;
+function highlightNew(container) {
+  if (typeof hljs === 'undefined') return;
+  container.querySelectorAll('pre code:not([data-highlighted])').forEach(el => hljs.highlightElement(el));
+}
+
+/* ═══════════════════════════════════════════
+   Markdown renderer
+═══════════════════════════════════════════ */
+function renderMarkdown(raw) {
+  const PH = '\uFFFE';
+  const blocks = [];
+
+  // 1. コードブロックを退避
+  let text = raw.replace(/```([\w]*)\n?([\s\S]*?)```/g, function(_, lang, code) {
+    const idx = blocks.length;
+    const id  = 'cb' + Math.random().toString(36).slice(2, 8);
+    const lbl = lang || 'code';
+    const esc = code.trim().replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+    blocks.push(
+      '<pre><div class="code-header">' +
+      '<span class="code-lang">' + lbl + '</span>' +
+      '<button class="copy-btn" onclick="copyCode(\'' + id + '\')">コピー</button>' +
+      '</div><code id="' + id + '" class="language-' + (lang || 'plaintext') + '">' + esc + '</code></pre>'
+    );
+    return PH + idx + PH;
   });
-  // inline code
-  h = h.replace(/`([^`]+)`/g, '<code>$1</code>');
-  // headings
-  h = h.replace(/^### (.+)$/gm, '<h3>$1</h3>');
-  h = h.replace(/^## (.+)$/gm, '<h2>$1</h2>');
-  h = h.replace(/^# (.+)$/gm, '<h1>$1</h1>');
-  // bold
-  h = h.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
-  // italic
-  h = h.replace(/\*(.+?)\*/g, '<em>$1</em>');
-  // unordered list
-  h = h.replace(/^[-•] (.+)$/gm, '<li>$1</li>');
-  h = h.replace(/(<li>.*<\/li>\n?)+/g, m => `<ul>${m}</ul>`);
-  // ordered list
-  h = h.replace(/^\d+\. (.+)$/gm, '<li>$1</li>');
-  // line breaks → paragraphs
-  const blocks = h.split(/\n{2,}/);
-  h = blocks.map(b => {
-    if (/^<(h[123]|ul|ol|pre|li)/.test(b.trim())) return b;
-    const lines = b.split('\n').join('<br>');
-    return `<p>${lines}</p>`;
+
+  // 2. 残りをエスケープ
+  text = text.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+
+  // 3. インラインコード
+  text = text.replace(/`([^`\n]+)`/g, '<code>$1</code>');
+
+  // 4. テーブル
+  text = text.replace(/((?:^\|.+\|\n)+)/gm, function(ts) {
+    const rows = ts.trim().split('\n');
+    if (rows.length < 2) return ts;
+    const cells = r => r.replace(/^\||\|$/g,'').split('|').map(c => c.trim());
+    const head  = cells(rows[0]).map(h => '<th>' + h + '</th>').join('');
+    const body  = rows.slice(2).map(r => '<tr>' + cells(r).map(c => '<td>' + c + '</td>').join('') + '</tr>').join('');
+    return '<table><thead><tr>' + head + '</tr></thead><tbody>' + body + '</tbody></table>';
+  });
+
+  // 5. 見出し
+  text = text.replace(/^### (.+)$/gm,'<h3>$1</h3>');
+  text = text.replace(/^## (.+)$/gm, '<h2>$1</h2>');
+  text = text.replace(/^# (.+)$/gm,  '<h1>$1</h1>');
+
+  // 6. blockquote / hr
+  text = text.replace(/^&gt; (.+)$/gm, '<blockquote>$1</blockquote>');
+  text = text.replace(/^[-*]{3,}$/gm,  '<hr>');
+
+  // 7. bold / italic
+  text = text.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
+  text = text.replace(/\*(.+?)\*/g,     '<em>$1</em>');
+  text = text.replace(/__(.+?)__/g,     '<strong>$1</strong>');
+  text = text.replace(/_([^_\n]+)_/g,   '<em>$1</em>');
+
+  // 8. ul / ol
+  text = text.replace(/^[ \t]*[-*] (.+)$/gm, '<li data-ul>$1</li>');
+  text = text.replace(/(<li data-ul>[^\n]*\n?)+/g, m => '<ul>' + m.replace(/ data-ul/g,'') + '</ul>');
+  text = text.replace(/^[ \t]*\d+\. (.+)$/gm, '<li data-ol>$1</li>');
+  text = text.replace(/(<li data-ol>[^\n]*\n?)+/g, m => '<ol>' + m.replace(/ data-ol/g,'') + '</ol>');
+
+  // 9. 段落
+  const BLK = /^<(h[1-6]|ul|ol|pre|table|blockquote|hr)/;
+  text = text.split(/\n{2,}/).map(b => {
+    const t = b.trim();
+    if (!t) return '';
+    if (BLK.test(t) || t.includes(PH)) return t;
+    return '<p>' + t.replace(/\n/g,'<br>') + '</p>';
   }).join('');
-  return h;
+
+  // 10. コードブロックを復元
+  text = text.replace(new RegExp(PH + '(\\d+)' + PH, 'g'), (_, i) => blocks[+i]);
+
+  return text;
 }
 
 function escHtml(s) {
@@ -1289,39 +983,27 @@ function copyCode(id) {
   if (!el) return;
   navigator.clipboard.writeText(el.textContent).then(() => {
     const btn = el.closest('pre').querySelector('.copy-btn');
-    if (btn) {
-      btn.textContent = 'コピー済み';
-      btn.classList.add('copied');
-      setTimeout(() => { btn.textContent = 'コピー'; btn.classList.remove('copied'); }, 2000);
-    }
+    if (!btn) return;
+    btn.textContent = 'コピー済み';
+    btn.classList.add('copied');
+    setTimeout(() => { btn.textContent = 'コピー'; btn.classList.remove('copied'); }, 2000);
   });
 }
 
-function highlightAll(container) {
-  if (typeof hljs === 'undefined') return;
-  container.querySelectorAll('pre code').forEach(el => {
-    if (!el.dataset.highlighted) hljs.highlightElement(el);
-  });
-}
-
-/* ─────── error toast ─────── */
-let toastTimer;
+/* ═══════════════════════════════════════════
+   Toast
+═══════════════════════════════════════════ */
 function showToast(msg, isError = true) {
-  const t = $('error-toast');
+  const t = $('toast');
   t.textContent = msg;
-  t.style.background = isError
-    ? 'rgba(247,108,108,0.15)'
-    : 'rgba(62,207,142,0.15)';
-  t.style.borderColor = isError
-    ? 'rgba(247,108,108,0.3)'
-    : 'rgba(62,207,142,0.3)';
-  t.style.color = isError ? 'var(--red)' : 'var(--green)';
+  t.style.background   = isError ? 'rgba(247,108,108,.15)' : 'rgba(62,207,142,.15)';
+  t.style.borderColor  = isError ? 'rgba(247,108,108,.3)'  : 'rgba(62,207,142,.3)';
+  t.style.color        = isError ? 'var(--red)' : 'var(--green)';
+  t.style.border       = '0.5px solid';
   t.classList.add('show');
   clearTimeout(toastTimer);
   toastTimer = setTimeout(() => t.classList.remove('show'), 3500);
 }
-
-updateSendBtn();
 </script>
 </body>
 </html>
