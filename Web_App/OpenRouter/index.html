@@ -1,0 +1,898 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>OpenRouter Chat</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #0f0f11;
+    --bg2: #17171a;
+    --bg3: #1e1e22;
+    --border: rgba(255,255,255,0.08);
+    --border2: rgba(255,255,255,0.14);
+    --text: #e8e8ec;
+    --text2: #9090a0;
+    --text3: #5a5a6a;
+    --accent: #7c6af7;
+    --accent2: #9d8fff;
+    --accent-bg: rgba(124,106,247,0.12);
+    --green: #3ecf8e;
+    --red: #f76c6c;
+    --radius: 12px;
+    --radius-sm: 8px;
+  }
+
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    height: 100dvh;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+
+  /* ── header ── */
+  header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 14px 20px;
+    border-bottom: 0.5px solid var(--border);
+    background: var(--bg);
+    flex-shrink: 0;
+  }
+
+  .logo {
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--text);
+    letter-spacing: -0.02em;
+  }
+  .logo span { color: var(--accent2); }
+
+  header .spacer { flex: 1; }
+
+  /* model selector */
+  #model-select {
+    background: var(--bg3);
+    border: 0.5px solid var(--border2);
+    border-radius: var(--radius-sm);
+    color: var(--text);
+    font-size: 13px;
+    padding: 6px 10px;
+    cursor: pointer;
+    max-width: 240px;
+    outline: none;
+    appearance: none;
+    -webkit-appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%239090a0' stroke-width='2'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 8px center;
+    padding-right: 26px;
+  }
+  #model-select:focus { border-color: var(--accent); }
+
+  .model-status {
+    font-size: 12px;
+    color: var(--text3);
+    white-space: nowrap;
+  }
+  .model-status.ok { color: var(--green); }
+  .model-status.loading { color: var(--accent2); }
+
+  /* settings button */
+  #settings-btn {
+    background: var(--bg3);
+    border: 0.5px solid var(--border);
+    border-radius: var(--radius-sm);
+    color: var(--text2);
+    width: 34px;
+    height: 34px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    font-size: 16px;
+    flex-shrink: 0;
+    transition: border-color 0.15s, color 0.15s;
+  }
+  #settings-btn:hover { border-color: var(--border2); color: var(--text); }
+
+  /* new chat button */
+  #new-chat-btn {
+    background: transparent;
+    border: 0.5px solid var(--border);
+    border-radius: var(--radius-sm);
+    color: var(--text2);
+    padding: 6px 12px;
+    font-size: 13px;
+    cursor: pointer;
+    transition: border-color 0.15s, color 0.15s;
+    white-space: nowrap;
+  }
+  #new-chat-btn:hover { border-color: var(--border2); color: var(--text); }
+
+  /* ── settings panel ── */
+  #settings-panel {
+    display: none;
+    position: absolute;
+    top: 58px;
+    right: 20px;
+    z-index: 100;
+    background: var(--bg2);
+    border: 0.5px solid var(--border2);
+    border-radius: var(--radius);
+    padding: 16px;
+    width: 320px;
+    box-shadow: 0 16px 48px rgba(0,0,0,0.5);
+  }
+  #settings-panel.open { display: block; }
+
+  .settings-title {
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--text);
+    margin-bottom: 12px;
+  }
+
+  .field-label {
+    font-size: 12px;
+    color: var(--text2);
+    margin-bottom: 6px;
+    display: block;
+  }
+
+  .field-group { margin-bottom: 14px; }
+
+  .key-input-row {
+    display: flex;
+    gap: 8px;
+  }
+
+  input[type="text"], input[type="password"] {
+    background: var(--bg3);
+    border: 0.5px solid var(--border2);
+    border-radius: var(--radius-sm);
+    color: var(--text);
+    font-size: 13px;
+    padding: 8px 10px;
+    width: 100%;
+    outline: none;
+    transition: border-color 0.15s;
+    font-family: inherit;
+  }
+  input[type="text"]:focus, input[type="password"]:focus {
+    border-color: var(--accent);
+  }
+
+  .btn-save {
+    background: var(--accent);
+    border: none;
+    border-radius: var(--radius-sm);
+    color: #fff;
+    font-size: 13px;
+    padding: 8px 14px;
+    cursor: pointer;
+    flex-shrink: 0;
+    transition: opacity 0.15s;
+    font-family: inherit;
+  }
+  .btn-save:hover { opacity: 0.9; }
+
+  .api-hint {
+    font-size: 11px;
+    color: var(--text3);
+    margin-top: 6px;
+    line-height: 1.5;
+  }
+  .api-hint a { color: var(--accent2); text-decoration: none; }
+  .api-hint a:hover { text-decoration: underline; }
+
+  .sys-textarea {
+    background: var(--bg3);
+    border: 0.5px solid var(--border2);
+    border-radius: var(--radius-sm);
+    color: var(--text);
+    font-size: 13px;
+    padding: 8px 10px;
+    width: 100%;
+    min-height: 70px;
+    resize: vertical;
+    outline: none;
+    font-family: inherit;
+    line-height: 1.5;
+    transition: border-color 0.15s;
+  }
+  .sys-textarea:focus { border-color: var(--accent); }
+
+  /* ── messages ── */
+  #messages {
+    flex: 1;
+    overflow-y: auto;
+    padding: 24px 0;
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+    scroll-behavior: smooth;
+  }
+  #messages::-webkit-scrollbar { width: 4px; }
+  #messages::-webkit-scrollbar-track { background: transparent; }
+  #messages::-webkit-scrollbar-thumb { background: var(--bg3); border-radius: 4px; }
+
+  .msg-row {
+    display: flex;
+    padding: 10px 24px;
+    gap: 14px;
+    transition: background 0.1s;
+  }
+  .msg-row:hover { background: rgba(255,255,255,0.015); }
+
+  .msg-row.user { flex-direction: row-reverse; }
+
+  .avatar {
+    width: 30px;
+    height: 30px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 12px;
+    font-weight: 600;
+    flex-shrink: 0;
+    margin-top: 2px;
+  }
+  .avatar.ai {
+    background: var(--accent-bg);
+    color: var(--accent2);
+    border: 0.5px solid rgba(124,106,247,0.25);
+  }
+  .avatar.user {
+    background: rgba(62,207,142,0.12);
+    color: var(--green);
+    border: 0.5px solid rgba(62,207,142,0.2);
+  }
+
+  .msg-bubble {
+    max-width: min(72%, 640px);
+    font-size: 14px;
+    line-height: 1.75;
+    color: var(--text);
+  }
+
+  .msg-row.user .msg-bubble {
+    background: var(--bg3);
+    border: 0.5px solid var(--border);
+    border-radius: 12px 4px 12px 12px;
+    padding: 10px 14px;
+    color: var(--text);
+  }
+
+  .msg-row.ai .msg-bubble {
+    color: var(--text);
+    padding: 4px 0;
+  }
+
+  /* markdown-ish */
+  .msg-bubble pre {
+    background: var(--bg3);
+    border: 0.5px solid var(--border);
+    border-radius: var(--radius-sm);
+    padding: 12px 14px;
+    overflow-x: auto;
+    font-size: 13px;
+    margin: 8px 0;
+    font-family: "SF Mono", "Fira Code", monospace;
+    line-height: 1.6;
+  }
+  .msg-bubble code {
+    background: var(--bg3);
+    border-radius: 4px;
+    padding: 1px 5px;
+    font-size: 12.5px;
+    font-family: "SF Mono", "Fira Code", monospace;
+    color: var(--accent2);
+  }
+  .msg-bubble pre code {
+    background: none;
+    padding: 0;
+    color: var(--text);
+  }
+  .msg-bubble p { margin-bottom: 8px; }
+  .msg-bubble p:last-child { margin-bottom: 0; }
+  .msg-bubble ul, .msg-bubble ol {
+    padding-left: 20px;
+    margin-bottom: 8px;
+  }
+  .msg-bubble li { margin-bottom: 3px; }
+  .msg-bubble strong { font-weight: 600; color: var(--text); }
+  .msg-bubble h1, .msg-bubble h2, .msg-bubble h3 {
+    font-weight: 600;
+    margin: 12px 0 6px;
+    color: var(--text);
+  }
+  .msg-bubble h1 { font-size: 18px; }
+  .msg-bubble h2 { font-size: 16px; }
+  .msg-bubble h3 { font-size: 14px; }
+
+  /* typing indicator */
+  .typing-dot {
+    display: inline-flex;
+    gap: 4px;
+    align-items: center;
+    padding: 4px 0;
+  }
+  .typing-dot span {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--text3);
+    animation: bounce 1.2s infinite;
+  }
+  .typing-dot span:nth-child(2) { animation-delay: 0.2s; }
+  .typing-dot span:nth-child(3) { animation-delay: 0.4s; }
+  @keyframes bounce {
+    0%, 60%, 100% { transform: translateY(0); }
+    30% { transform: translateY(-5px); }
+  }
+
+  /* empty state */
+  #empty-state {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    color: var(--text3);
+    font-size: 14px;
+    user-select: none;
+    padding: 40px 20px;
+    text-align: center;
+  }
+  #empty-state .big { font-size: 28px; margin-bottom: 4px; }
+  #empty-state .name {
+    font-size: 17px;
+    font-weight: 500;
+    color: var(--text2);
+    margin-bottom: 4px;
+  }
+  #empty-state .no-key {
+    background: rgba(247,108,108,0.1);
+    border: 0.5px solid rgba(247,108,108,0.25);
+    border-radius: var(--radius-sm);
+    color: var(--red);
+    font-size: 12px;
+    padding: 6px 12px;
+    margin-top: 8px;
+  }
+
+  /* ── input area ── */
+  #input-area {
+    padding: 14px 20px 20px;
+    border-top: 0.5px solid var(--border);
+    background: var(--bg);
+    flex-shrink: 0;
+  }
+
+  .input-box {
+    display: flex;
+    align-items: flex-end;
+    gap: 10px;
+    background: var(--bg2);
+    border: 0.5px solid var(--border2);
+    border-radius: 14px;
+    padding: 10px 12px;
+    transition: border-color 0.15s;
+  }
+  .input-box:focus-within { border-color: rgba(124,106,247,0.4); }
+
+  #user-input {
+    flex: 1;
+    background: none;
+    border: none;
+    outline: none;
+    color: var(--text);
+    font-size: 14px;
+    font-family: inherit;
+    line-height: 1.6;
+    resize: none;
+    max-height: 160px;
+    min-height: 22px;
+    overflow-y: auto;
+  }
+  #user-input::placeholder { color: var(--text3); }
+  #user-input::-webkit-scrollbar { width: 3px; }
+  #user-input::-webkit-scrollbar-thumb { background: var(--bg3); border-radius: 3px; }
+
+  #send-btn {
+    background: var(--accent);
+    border: none;
+    border-radius: 8px;
+    width: 34px;
+    height: 34px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    flex-shrink: 0;
+    transition: opacity 0.15s, transform 0.1s;
+    color: #fff;
+  }
+  #send-btn:hover { opacity: 0.9; }
+  #send-btn:active { transform: scale(0.95); }
+  #send-btn:disabled { opacity: 0.35; cursor: not-allowed; }
+
+  #send-btn svg { width: 16px; height: 16px; }
+
+  .input-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 8px;
+    padding: 0 2px;
+  }
+  .input-hint { font-size: 11px; color: var(--text3); }
+  #stop-btn {
+    display: none;
+    background: rgba(247,108,108,0.1);
+    border: 0.5px solid rgba(247,108,108,0.25);
+    border-radius: var(--radius-sm);
+    color: var(--red);
+    font-size: 12px;
+    padding: 4px 10px;
+    cursor: pointer;
+    font-family: inherit;
+  }
+  #stop-btn.visible { display: inline-block; }
+
+  /* error toast */
+  #error-toast {
+    display: none;
+    position: fixed;
+    bottom: 90px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: rgba(247,108,108,0.15);
+    border: 0.5px solid rgba(247,108,108,0.3);
+    border-radius: var(--radius-sm);
+    color: var(--red);
+    font-size: 13px;
+    padding: 8px 16px;
+    z-index: 200;
+    max-width: 400px;
+    text-align: center;
+  }
+  #error-toast.show { display: block; }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">Open<span>Router</span> Chat</div>
+  <div class="spacer"></div>
+  <div class="model-status" id="model-status">モデル未選択</div>
+  <select id="model-select" title="モデルを選択">
+    <option value="">── モデルを選択 ──</option>
+  </select>
+  <button id="new-chat-btn" title="会話をリセット">新しい会話</button>
+  <button id="settings-btn" title="設定">⚙</button>
+</header>
+
+<!-- settings panel -->
+<div id="settings-panel">
+  <div class="settings-title">設定</div>
+
+  <div class="field-group">
+    <label class="field-label" for="api-key-input">OpenRouter APIキー</label>
+    <div class="key-input-row">
+      <input type="password" id="api-key-input" placeholder="sk-or-v1-..." autocomplete="off">
+      <button class="btn-save" id="save-key-btn">保存</button>
+    </div>
+    <p class="api-hint">
+      APIキーは <a href="https://openrouter.ai/keys" target="_blank">openrouter.ai/keys</a> から取得できます。<br>
+      このキーはブラウザのローカルストレージのみに保存されます。
+    </p>
+  </div>
+
+  <div class="field-group">
+    <label class="field-label" for="sys-prompt-input">システムプロンプト（任意）</label>
+    <textarea class="sys-textarea" id="sys-prompt-input" placeholder="例: You are a helpful assistant. Answer in Japanese."></textarea>
+  </div>
+
+  <button class="btn-save" id="save-settings-btn" style="width:100%;margin-top:4px;">設定を保存</button>
+</div>
+
+<!-- messages -->
+<div id="messages">
+  <div id="empty-state">
+    <div class="big">✦</div>
+    <div class="name">OpenRouter Chat</div>
+    <div>モデルを選択してメッセージを送信してください</div>
+    <div id="no-key-notice" class="no-key" style="display:none;">⚠ APIキーが設定されていません — 右上の ⚙ から設定してください</div>
+  </div>
+</div>
+
+<div id="input-area">
+  <div class="input-box">
+    <textarea id="user-input" placeholder="メッセージを入力..." rows="1"></textarea>
+    <button id="send-btn" title="送信" disabled>
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+        <line x1="22" y1="2" x2="11" y2="13"></line>
+        <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
+      </svg>
+    </button>
+  </div>
+  <div class="input-footer">
+    <span class="input-hint">Shift+Enter で改行 · Enter で送信</span>
+    <button id="stop-btn">■ 停止</button>
+  </div>
+</div>
+
+<div id="error-toast"></div>
+
+<script>
+const $ = id => document.getElementById(id);
+
+/* ─────── state ─────── */
+let apiKey = localStorage.getItem('or_api_key') || '';
+let systemPrompt = localStorage.getItem('or_sys_prompt') || '';
+let messages = [];           // {role, content}
+let isStreaming = false;
+let abortController = null;
+let currentModel = localStorage.getItem('or_model') || '';
+
+/* ─────── init ─────── */
+$('api-key-input').value = apiKey;
+$('sys-prompt-input').value = systemPrompt;
+if (!apiKey) $('no-key-notice').style.display = 'block';
+
+loadModels();
+
+/* ─────── settings panel ─────── */
+$('settings-btn').onclick = e => {
+  e.stopPropagation();
+  $('settings-panel').classList.toggle('open');
+};
+document.addEventListener('click', e => {
+  if (!$('settings-panel').contains(e.target) && e.target !== $('settings-btn')) {
+    $('settings-panel').classList.remove('open');
+  }
+});
+
+$('save-key-btn').onclick = () => {
+  apiKey = $('api-key-input').value.trim();
+  localStorage.setItem('or_api_key', apiKey);
+  showToast('APIキーを保存しました', false);
+  $('no-key-notice').style.display = apiKey ? 'none' : 'block';
+  updateSendBtn();
+  $('settings-panel').classList.remove('open');
+  if (apiKey) loadModels();
+};
+
+$('save-settings-btn').onclick = () => {
+  apiKey = $('api-key-input').value.trim();
+  systemPrompt = $('sys-prompt-input').value.trim();
+  localStorage.setItem('or_api_key', apiKey);
+  localStorage.setItem('or_sys_prompt', systemPrompt);
+  showToast('設定を保存しました', false);
+  $('no-key-notice').style.display = apiKey ? 'none' : 'block';
+  updateSendBtn();
+  $('settings-panel').classList.remove('open');
+  if (apiKey) loadModels();
+};
+
+/* ─────── load free models ─────── */
+async function loadModels() {
+  const sel = $('model-select');
+  const status = $('model-status');
+
+  status.className = 'model-status loading';
+  status.textContent = '読み込み中…';
+
+  try {
+    const res = await fetch('https://openrouter.ai/api/v1/models', {
+      headers: apiKey ? { 'Authorization': 'Bearer ' + apiKey } : {}
+    });
+    const data = await res.json();
+
+    const free = (data.data || [])
+      .filter(m => {
+        const p = m.pricing;
+        return p && parseFloat(p.prompt) === 0 && parseFloat(p.completion) === 0;
+      })
+      .sort((a, b) => a.name.localeCompare(b.name));
+
+    sel.innerHTML = '<option value="">── モデルを選択 ──</option>';
+
+    if (free.length === 0) {
+      sel.innerHTML += '<option value="" disabled>無料モデルが見つかりません</option>';
+      status.textContent = '無料モデルなし';
+      status.className = 'model-status';
+      return;
+    }
+
+    free.forEach(m => {
+      const opt = document.createElement('option');
+      opt.value = m.id;
+      opt.textContent = m.name || m.id;
+      if (m.id === currentModel) opt.selected = true;
+      sel.appendChild(opt);
+    });
+
+    if (currentModel && free.find(m => m.id === currentModel)) {
+      status.textContent = '✓ ' + free.find(m => m.id === currentModel).name;
+      status.className = 'model-status ok';
+    } else {
+      status.textContent = free.length + ' 件の無料モデル';
+      status.className = 'model-status';
+    }
+
+    updateSendBtn();
+  } catch (err) {
+    sel.innerHTML = '<option value="">読み込み失敗</option>';
+    status.textContent = 'エラー';
+    status.className = 'model-status';
+  }
+}
+
+$('model-select').onchange = () => {
+  currentModel = $('model-select').value;
+  localStorage.setItem('or_model', currentModel);
+  const sel = $('model-select');
+  const chosen = sel.options[sel.selectedIndex];
+  if (currentModel) {
+    $('model-status').textContent = '✓ ' + chosen.textContent;
+    $('model-status').className = 'model-status ok';
+  } else {
+    $('model-status').textContent = 'モデル未選択';
+    $('model-status').className = 'model-status';
+  }
+  updateSendBtn();
+};
+
+function updateSendBtn() {
+  const canSend = apiKey && currentModel && !isStreaming;
+  $('send-btn').disabled = !canSend;
+}
+
+/* ─────── new chat ─────── */
+$('new-chat-btn').onclick = () => {
+  messages = [];
+  const container = $('messages');
+  container.innerHTML = `
+    <div id="empty-state">
+      <div class="big">✦</div>
+      <div class="name">OpenRouter Chat</div>
+      <div>モデルを選択してメッセージを送信してください</div>
+      <div id="no-key-notice" class="no-key" style="display:${apiKey ? 'none' : 'block'};">⚠ APIキーが設定されていません — 右上の ⚙ から設定してください</div>
+    </div>`;
+};
+
+/* ─────── textarea auto-resize ─────── */
+const textarea = $('user-input');
+textarea.addEventListener('input', () => {
+  textarea.style.height = 'auto';
+  textarea.style.height = Math.min(textarea.scrollHeight, 160) + 'px';
+});
+
+textarea.addEventListener('keydown', e => {
+  if (e.key === 'Enter' && !e.shiftKey) {
+    e.preventDefault();
+    if (!$('send-btn').disabled) sendMessage();
+  }
+});
+
+$('send-btn').onclick = sendMessage;
+
+/* ─────── stop ─────── */
+$('stop-btn').onclick = () => {
+  if (abortController) abortController.abort();
+};
+
+/* ─────── send ─────── */
+async function sendMessage() {
+  const text = textarea.value.trim();
+  if (!text || isStreaming) return;
+
+  hideEmptyState();
+
+  messages.push({ role: 'user', content: text });
+  appendMessage('user', text);
+
+  textarea.value = '';
+  textarea.style.height = 'auto';
+
+  const aiRow = appendMessage('ai', '', true);
+  const bubble = aiRow.querySelector('.msg-bubble');
+
+  isStreaming = true;
+  updateSendBtn();
+  $('stop-btn').classList.add('visible');
+  abortController = new AbortController();
+
+  const payload = {
+    model: currentModel,
+    stream: true,
+    messages: [
+      ...(systemPrompt ? [{ role: 'system', content: systemPrompt }] : []),
+      ...messages
+    ]
+  };
+
+  let fullText = '';
+
+  try {
+    const res = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Authorization': 'Bearer ' + apiKey,
+        'Content-Type': 'application/json',
+        'HTTP-Referer': location.href,
+        'X-Title': 'OpenRouter Chat'
+      },
+      body: JSON.stringify(payload),
+      signal: abortController.signal
+    });
+
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error((err.error?.message) || `HTTP ${res.status}`);
+    }
+
+    const reader = res.body.getReader();
+    const decoder = new TextDecoder();
+    bubble.innerHTML = '<div class="typing-dot"><span></span><span></span><span></span></div>';
+
+    let buf = '';
+    let started = false;
+
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      buf += decoder.decode(value, { stream: true });
+
+      const lines = buf.split('\n');
+      buf = lines.pop();
+
+      for (const line of lines) {
+        if (!line.startsWith('data: ')) continue;
+        const chunk = line.slice(6).trim();
+        if (chunk === '[DONE]') break;
+        try {
+          const obj = JSON.parse(chunk);
+          const delta = obj.choices?.[0]?.delta?.content;
+          if (delta) {
+            if (!started) { bubble.innerHTML = ''; started = true; }
+            fullText += delta;
+            bubble.innerHTML = renderMarkdown(fullText);
+            scrollBottom();
+          }
+        } catch {}
+      }
+    }
+
+    messages.push({ role: 'assistant', content: fullText });
+
+  } catch (err) {
+    if (err.name === 'AbortError') {
+      if (fullText) {
+        bubble.innerHTML = renderMarkdown(fullText) + '<br><span style="color:var(--text3);font-size:12px;">— 停止しました</span>';
+        messages.push({ role: 'assistant', content: fullText });
+      } else {
+        aiRow.remove();
+        messages.pop();
+      }
+    } else {
+      bubble.innerHTML = `<span style="color:var(--red);">エラー: ${escHtml(err.message)}</span>`;
+      messages.pop();
+      showToast('エラー: ' + err.message, true);
+    }
+  } finally {
+    isStreaming = false;
+    abortController = null;
+    updateSendBtn();
+    $('stop-btn').classList.remove('visible');
+    scrollBottom();
+  }
+}
+
+/* ─────── DOM helpers ─────── */
+function hideEmptyState() {
+  const es = $('empty-state');
+  if (es) es.remove();
+}
+
+function appendMessage(role, text, streaming = false) {
+  const container = $('messages');
+  const row = document.createElement('div');
+  row.className = 'msg-row ' + role;
+
+  const avatar = document.createElement('div');
+  avatar.className = 'avatar ' + role;
+  avatar.textContent = role === 'user' ? 'You' : 'AI';
+
+  const bubble = document.createElement('div');
+  bubble.className = 'msg-bubble';
+
+  if (streaming) {
+    bubble.innerHTML = '<div class="typing-dot"><span></span><span></span><span></span></div>';
+  } else {
+    if (role === 'user') {
+      bubble.textContent = text;
+    } else {
+      bubble.innerHTML = renderMarkdown(text);
+    }
+  }
+
+  row.appendChild(avatar);
+  row.appendChild(bubble);
+  container.appendChild(row);
+  scrollBottom();
+  return row;
+}
+
+function scrollBottom() {
+  const c = $('messages');
+  c.scrollTop = c.scrollHeight;
+}
+
+/* ─────── minimal markdown renderer ─────── */
+function renderMarkdown(text) {
+  let h = escHtml(text);
+  // code blocks
+  h = h.replace(/```[\w]*\n?([\s\S]*?)```/g, (_, code) =>
+    `<pre><code>${code.trim()}</code></pre>`);
+  // inline code
+  h = h.replace(/`([^`]+)`/g, '<code>$1</code>');
+  // headings
+  h = h.replace(/^### (.+)$/gm, '<h3>$1</h3>');
+  h = h.replace(/^## (.+)$/gm, '<h2>$1</h2>');
+  h = h.replace(/^# (.+)$/gm, '<h1>$1</h1>');
+  // bold
+  h = h.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
+  // italic
+  h = h.replace(/\*(.+?)\*/g, '<em>$1</em>');
+  // unordered list
+  h = h.replace(/^[-•] (.+)$/gm, '<li>$1</li>');
+  h = h.replace(/(<li>.*<\/li>\n?)+/g, m => `<ul>${m}</ul>`);
+  // ordered list
+  h = h.replace(/^\d+\. (.+)$/gm, '<li>$1</li>');
+  // line breaks → paragraphs
+  const blocks = h.split(/\n{2,}/);
+  h = blocks.map(b => {
+    if (/^<(h[123]|ul|ol|pre|li)/.test(b.trim())) return b;
+    const lines = b.split('\n').join('<br>');
+    return `<p>${lines}</p>`;
+  }).join('');
+  return h;
+}
+
+function escHtml(s) {
+  return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+/* ─────── error toast ─────── */
+let toastTimer;
+function showToast(msg, isError = true) {
+  const t = $('error-toast');
+  t.textContent = msg;
+  t.style.background = isError
+    ? 'rgba(247,108,108,0.15)'
+    : 'rgba(62,207,142,0.15)';
+  t.style.borderColor = isError
+    ? 'rgba(247,108,108,0.3)'
+    : 'rgba(62,207,142,0.3)';
+  t.style.color = isError ? 'var(--red)' : 'var(--green)';
+  t.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => t.classList.remove('show'), 3500);
+}
+
+updateSendBtn();
+</script>
+</body>
+</html>
