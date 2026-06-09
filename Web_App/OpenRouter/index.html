@@ -56,8 +56,14 @@
 
   header .spacer { flex: 1; }
 
-  /* model selector */
-  #model-select {
+  /* custom model dropdown */
+  .model-dropdown {
+    position: relative;
+  }
+  .model-dropdown-btn {
+    display: flex;
+    align-items: center;
+    gap: 6px;
     background: var(--bg3);
     border: 0.5px solid var(--border2);
     border-radius: var(--radius-sm);
@@ -65,16 +71,124 @@
     font-size: 13px;
     padding: 6px 10px;
     cursor: pointer;
+    min-width: 180px;
     max-width: 240px;
-    outline: none;
-    appearance: none;
-    -webkit-appearance: none;
-    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%239090a0' stroke-width='2'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
-    background-repeat: no-repeat;
-    background-position: right 8px center;
-    padding-right: 26px;
+    font-family: inherit;
+    transition: border-color 0.15s;
+    white-space: nowrap;
+    overflow: hidden;
   }
-  #model-select:focus { border-color: var(--accent); }
+  .model-dropdown-btn:hover { border-color: rgba(124,106,247,0.4); }
+  .model-dropdown-btn.open { border-color: var(--accent); }
+  .model-dropdown-btn .btn-label {
+    flex: 1;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    text-align: left;
+  }
+  .model-dropdown-btn .chevron {
+    flex-shrink: 0;
+    transition: transform 0.2s;
+    color: var(--text3);
+    font-size: 10px;
+  }
+  .model-dropdown-btn.open .chevron { transform: rotate(180deg); }
+
+  .model-dropdown-list {
+    display: none;
+    position: absolute;
+    top: calc(100% + 6px);
+    right: 0;
+    z-index: 300;
+    background: var(--bg2);
+    border: 0.5px solid var(--border2);
+    border-radius: var(--radius);
+    min-width: 320px;
+    max-height: 420px;
+    overflow-y: auto;
+    box-shadow: 0 16px 48px rgba(0,0,0,0.5);
+  }
+  .model-dropdown-list::-webkit-scrollbar { width: 4px; }
+  .model-dropdown-list::-webkit-scrollbar-thumb { background: var(--bg3); border-radius: 4px; }
+  .model-dropdown-list.open { display: block; }
+
+  .dropdown-search {
+    padding: 10px 12px 8px;
+    border-bottom: 0.5px solid var(--border);
+    position: sticky;
+    top: 0;
+    background: var(--bg2);
+    z-index: 1;
+  }
+  .dropdown-search input {
+    width: 100%;
+    background: var(--bg3);
+    border: 0.5px solid var(--border2);
+    border-radius: var(--radius-sm);
+    color: var(--text);
+    font-size: 12px;
+    padding: 6px 10px;
+    outline: none;
+    font-family: inherit;
+  }
+  .dropdown-search input:focus { border-color: var(--accent); }
+
+  .dropdown-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 9px 14px;
+    cursor: pointer;
+    transition: background 0.1s;
+    gap: 10px;
+  }
+  .dropdown-item:hover { background: rgba(255,255,255,0.04); }
+  .dropdown-item.selected { background: var(--accent-bg); }
+  .dropdown-item .item-name {
+    font-size: 13px;
+    color: var(--text);
+    flex: 1;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .dropdown-item .item-perf {
+    display: flex;
+    gap: 5px;
+    flex-shrink: 0;
+  }
+  .dropdown-item .item-stat {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 1px;
+  }
+  .dropdown-item .stat-val {
+    font-size: 11px;
+    font-weight: 500;
+    color: var(--text2);
+    line-height: 1;
+  }
+  .dropdown-item .stat-label {
+    font-size: 9px;
+    color: var(--text3);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    line-height: 1;
+  }
+  .dropdown-item .stat-sep {
+    width: 0.5px;
+    height: 22px;
+    background: var(--border);
+    flex-shrink: 0;
+    margin: 0 2px;
+  }
+  .dropdown-loading {
+    padding: 16px;
+    text-align: center;
+    font-size: 12px;
+    color: var(--text3);
+  }
 
   .model-status {
     font-size: 12px;
@@ -83,6 +197,51 @@
   }
   .model-status.ok { color: var(--green); }
   .model-status.loading { color: var(--accent2); }
+
+  .perf-badges {
+    display: flex;
+    gap: 6px;
+    align-items: center;
+  }
+  .perf-badge {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    background: var(--bg3);
+    border: 0.5px solid var(--border2);
+    border-radius: 6px;
+    padding: 3px 8px;
+    font-size: 11px;
+    color: var(--text2);
+    white-space: nowrap;
+  }
+  .perf-badge .badge-label {
+    color: var(--text3);
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+  }
+  .perf-badge .badge-val {
+    font-weight: 500;
+    color: var(--text);
+  }
+  .perf-badge.loading-badge {
+    color: var(--text3);
+    font-style: italic;
+  }
+
+  .unit-btn {
+    background: transparent;
+    border: none;
+    color: var(--text3);
+    font-size: 12px;
+    padding: 5px 12px;
+    cursor: pointer;
+    font-family: inherit;
+    transition: background 0.1s, color 0.1s;
+  }
+  .unit-btn:hover { background: var(--bg3); color: var(--text); }
+  .unit-btn.active { background: var(--accent); color: #fff; }
 
   /* settings button */
   #settings-btn {
@@ -281,13 +440,64 @@
     background: var(--bg3);
     border: 0.5px solid var(--border);
     border-radius: var(--radius-sm);
-    padding: 12px 14px;
-    overflow-x: auto;
+    padding: 0;
+    overflow: hidden;
     font-size: 13px;
     margin: 8px 0;
     font-family: "SF Mono", "Fira Code", monospace;
     line-height: 1.6;
+    position: relative;
   }
+  .code-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 6px 12px;
+    background: rgba(255,255,255,0.04);
+    border-bottom: 0.5px solid var(--border);
+  }
+  .code-lang {
+    font-size: 11px;
+    color: var(--text3);
+    font-family: "SF Mono", "Fira Code", monospace;
+    text-transform: lowercase;
+  }
+  .copy-btn {
+    background: transparent;
+    border: 0.5px solid var(--border);
+    border-radius: 4px;
+    color: var(--text3);
+    font-size: 11px;
+    padding: 2px 8px;
+    cursor: pointer;
+    font-family: inherit;
+    transition: border-color 0.15s, color 0.15s;
+    line-height: 1.6;
+  }
+  .copy-btn:hover { border-color: var(--border2); color: var(--text2); }
+  .copy-btn.copied { color: var(--green); border-color: rgba(62,207,142,0.3); }
+  .msg-bubble pre code {
+    display: block;
+    padding: 12px 14px;
+    overflow-x: auto;
+  }
+  /* highlight.js テーマ上書き（背景透過） */
+  .hljs { background: transparent !important; padding: 0 !important; }
+
+  /* シンタックスカラー（ダーク） */
+  .hljs-keyword  { color: #c792ea; }
+  .hljs-string   { color: #c3e88d; }
+  .hljs-comment  { color: #546e7a; font-style: italic; }
+  .hljs-number   { color: #f78c6c; }
+  .hljs-built_in { color: #82aaff; }
+  .hljs-title    { color: #82aaff; }
+  .hljs-attr     { color: #ffcb6b; }
+  .hljs-literal  { color: #ff5370; }
+  .hljs-type     { color: #ffcb6b; }
+  .hljs-variable { color: #eeffff; }
+  .hljs-params   { color: #eeffff; }
+  .hljs-tag      { color: #f07178; }
+  .hljs-name     { color: #f07178; }
   .msg-bubble code {
     background: var(--bg3);
     border-radius: 4px;
@@ -468,6 +678,7 @@
   }
   #error-toast.show { display: block; }
 </style>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
 </head>
 <body>
 
@@ -475,9 +686,23 @@
   <div class="logo">Open<span>Router</span> Chat</div>
   <div class="spacer"></div>
   <div class="model-status" id="model-status">モデル未選択</div>
-  <select id="model-select" title="モデルを選択">
-    <option value="">── モデルを選択 ──</option>
-  </select>
+  <div class="perf-badges" id="perf-badges" style="display:none;">
+    <div class="perf-badge loading-badge" id="perf-loading">取得中…</div>
+  </div>
+  <div class="model-dropdown" id="model-dropdown">
+    <button class="model-dropdown-btn" id="model-dropdown-btn">
+      <span class="btn-label" id="model-btn-label">── モデルを選択 ──</span>
+      <span class="chevron">▼</span>
+    </button>
+    <div class="model-dropdown-list" id="model-dropdown-list">
+      <div class="dropdown-search">
+        <input type="text" id="model-search" placeholder="モデルを検索…" autocomplete="off">
+      </div>
+      <div id="model-dropdown-items">
+        <div class="dropdown-loading">読み込み中…</div>
+      </div>
+    </div>
+  </div>
   <button id="new-chat-btn" title="会話をリセット">新しい会話</button>
   <button id="settings-btn" title="設定">⚙</button>
 </header>
@@ -489,13 +714,21 @@
   <div class="field-group">
     <label class="field-label" for="api-key-input">OpenRouter APIキー</label>
     <div class="key-input-row">
-      <input type="password" id="api-key-input" placeholder="sk-or-v1-..." autocomplete="off">
+      <input type="text" id="api-key-input" placeholder="sk-or-v1-..." autocomplete="off" style="font-family:monospace;font-size:12px;">
       <button class="btn-save" id="save-key-btn">保存</button>
     </div>
     <p class="api-hint">
       APIキーは <a href="https://openrouter.ai/keys" target="_blank">openrouter.ai/keys</a> から取得できます。<br>
       このキーはブラウザのローカルストレージのみに保存されます。
     </p>
+  </div>
+
+  <div class="field-group">
+    <label class="field-label">レイテンシー表示単位</label>
+    <div style="display:flex;gap:0;border:0.5px solid var(--border2);border-radius:var(--radius-sm);overflow:hidden;width:fit-content;">
+      <button id="unit-ms" class="unit-btn" onclick="setLatencyUnit('ms')">ms</button>
+      <button id="unit-s"  class="unit-btn" onclick="setLatencyUnit('s')">s</button>
+    </div>
   </div>
 
   <div class="field-group">
@@ -544,6 +777,7 @@ let messages = [];           // {role, content}
 let isStreaming = false;
 let abortController = null;
 let currentModel = localStorage.getItem('or_model') || '';
+let latencyUnit = localStorage.getItem('or_latency_unit') || 'ms';
 
 /* ─────── init ─────── */
 $('api-key-input').value = apiKey;
@@ -551,10 +785,14 @@ $('sys-prompt-input').value = systemPrompt;
 if (!apiKey) $('no-key-notice').style.display = 'block';
 
 loadModels();
+updateUnitBtns();
 
 /* ─────── settings panel ─────── */
 $('settings-btn').onclick = e => {
   e.stopPropagation();
+  // 開くたびに最新のlocalStorageから再反映
+  const stored = localStorage.getItem('or_api_key') || '';
+  if (stored) { apiKey = stored; $('api-key-input').value = stored; }
   $('settings-panel').classList.toggle('open');
 };
 document.addEventListener('click', e => {
@@ -563,35 +801,77 @@ document.addEventListener('click', e => {
   }
 });
 
-$('save-key-btn').onclick = () => {
+function saveSettings() {
   apiKey = $('api-key-input').value.trim();
+  systemPrompt = $('sys-prompt-input').value.trim();
   localStorage.setItem('or_api_key', apiKey);
-  showToast('APIキーを保存しました', false);
+  localStorage.setItem('or_sys_prompt', systemPrompt);
   $('no-key-notice').style.display = apiKey ? 'none' : 'block';
   updateSendBtn();
+}
+
+function fmtTTFT(ms) {
+  if (ms === null) return '—';
+  if (latencyUnit === 's') return (ms / 1000).toFixed(1) + ' s';
+  return Math.round(ms) + ' ms';
+}
+
+function setLatencyUnit(unit) {
+  latencyUnit = unit;
+  localStorage.setItem('or_latency_unit', unit);
+  updateUnitBtns();
+  // ドロップダウン内の全TTFT要素を再描画
+  freeModels.forEach(m => {
+    const key = m.id.replace(/[^a-z0-9]/gi,'_');
+    const el = document.getElementById('dd-ttft-' + key);
+    if (el) el.textContent = fmtTTFT(m.ttft);
+  });
+  // ヘッダーバッジも更新
+  const badgeEl = $('perf-badges').querySelector('.badge-val');
+  if (badgeEl && currentModel) {
+    const m = freeModels.find(m => m.id === currentModel);
+    if (m) {
+      const ttftBadge = $('perf-badges').querySelector('[data-type="ttft"]');
+      if (ttftBadge) ttftBadge.textContent = fmtTTFT(m.ttft);
+    }
+  }
+}
+
+function updateUnitBtns() {
+  $('unit-ms').classList.toggle('active', latencyUnit === 'ms');
+  $('unit-s').classList.toggle('active', latencyUnit === 's');
+}
+
+$('api-key-input').addEventListener('input', () => {
+  apiKey = $('api-key-input').value.trim();
+  localStorage.setItem('or_api_key', apiKey);
+  $('no-key-notice').style.display = apiKey ? 'none' : 'block';
+  updateSendBtn();
+});
+
+$('save-key-btn').onclick = () => {
+  saveSettings();
+  showToast('APIキーを保存しました', false);
   $('settings-panel').classList.remove('open');
   if (apiKey) loadModels();
 };
 
 $('save-settings-btn').onclick = () => {
-  apiKey = $('api-key-input').value.trim();
-  systemPrompt = $('sys-prompt-input').value.trim();
-  localStorage.setItem('or_api_key', apiKey);
-  localStorage.setItem('or_sys_prompt', systemPrompt);
+  saveSettings();
   showToast('設定を保存しました', false);
-  $('no-key-notice').style.display = apiKey ? 'none' : 'block';
-  updateSendBtn();
   $('settings-panel').classList.remove('open');
   if (apiKey) loadModels();
 };
 
 /* ─────── load free models ─────── */
-async function loadModels() {
-  const sel = $('model-select');
-  const status = $('model-status');
+let freeModels = [];   // {id, name, ttft, tps}  (perf filled in lazily)
 
+async function loadModels() {
+  const status = $('model-status');
+  const items = $('model-dropdown-items');
   status.className = 'model-status loading';
   status.textContent = '読み込み中…';
+  items.innerHTML = '<div class="dropdown-loading">読み込み中…</div>';
 
   try {
     const res = await fetch('https://openrouter.ai/api/v1/models', {
@@ -599,60 +879,171 @@ async function loadModels() {
     });
     const data = await res.json();
 
-    const free = (data.data || [])
+    freeModels = (data.data || [])
       .filter(m => {
         const p = m.pricing;
         return p && parseFloat(p.prompt) === 0 && parseFloat(p.completion) === 0;
       })
-      .sort((a, b) => a.name.localeCompare(b.name));
+      .sort((a, b) => (a.name || a.id).localeCompare(b.name || b.id))
+      .map(m => ({ id: m.id, name: m.name || m.id, ttft: null, tps: null }));
 
-    sel.innerHTML = '<option value="">── モデルを選択 ──</option>';
-
-    if (free.length === 0) {
-      sel.innerHTML += '<option value="" disabled>無料モデルが見つかりません</option>';
+    if (freeModels.length === 0) {
+      items.innerHTML = '<div class="dropdown-loading">無料モデルが見つかりません</div>';
       status.textContent = '無料モデルなし';
       status.className = 'model-status';
       return;
     }
 
-    free.forEach(m => {
-      const opt = document.createElement('option');
-      opt.value = m.id;
-      opt.textContent = m.name || m.id;
-      if (m.id === currentModel) opt.selected = true;
-      sel.appendChild(opt);
-    });
+    renderDropdownItems(freeModels, '');
 
-    if (currentModel && free.find(m => m.id === currentModel)) {
-      status.textContent = '✓ ' + free.find(m => m.id === currentModel).name;
+    if (currentModel && freeModels.find(m => m.id === currentModel)) {
+      const m = freeModels.find(m => m.id === currentModel);
+      $('model-btn-label').textContent = m.name;
+      status.textContent = '✓ ' + m.name;
       status.className = 'model-status ok';
+      fetchModelPerf(currentModel, true);
     } else {
-      status.textContent = free.length + ' 件の無料モデル';
+      status.textContent = freeModels.length + ' 件の無料モデル';
       status.className = 'model-status';
     }
 
     updateSendBtn();
+
+    // バックグラウンドで全モデルのperf取得
+    fetchAllPerf();
+
   } catch (err) {
-    sel.innerHTML = '<option value="">読み込み失敗</option>';
+    items.innerHTML = '<div class="dropdown-loading">読み込み失敗</div>';
     status.textContent = 'エラー';
     status.className = 'model-status';
   }
 }
 
-$('model-select').onchange = () => {
-  currentModel = $('model-select').value;
-  localStorage.setItem('or_model', currentModel);
-  const sel = $('model-select');
-  const chosen = sel.options[sel.selectedIndex];
-  if (currentModel) {
-    $('model-status').textContent = '✓ ' + chosen.textContent;
-    $('model-status').className = 'model-status ok';
-  } else {
-    $('model-status').textContent = 'モデル未選択';
-    $('model-status').className = 'model-status';
+function renderDropdownItems(models, query) {
+  const items = $('model-dropdown-items');
+  const q = query.toLowerCase();
+  const filtered = q ? models.filter(m => m.name.toLowerCase().includes(q) || m.id.toLowerCase().includes(q)) : models;
+
+  if (filtered.length === 0) {
+    items.innerHTML = '<div class="dropdown-loading">一致するモデルなし</div>';
+    return;
   }
-  updateSendBtn();
-};
+
+  items.innerHTML = filtered.map(m => {
+    const ttftStr = fmtTTFT(m.ttft);
+    const tpsStr  = m.tps  !== null ? m.tps.toFixed(1)  : '—';
+    const sel = m.id === currentModel ? ' selected' : '';
+    return `<div class="dropdown-item${sel}" data-id="${m.id}">
+      <span class="item-name">${m.name}</span>
+      <div class="item-perf">
+        <div class="item-stat">
+          <span class="stat-val" id="dd-ttft-${m.id.replace(/[^a-z0-9]/gi,'_')}">${ttftStr}</span>
+          <span class="stat-label">TTFT</span>
+        </div>
+        <div class="stat-sep"></div>
+        <div class="item-stat">
+          <span class="stat-val" id="dd-tps-${m.id.replace(/[^a-z0-9]/gi,'_')}">${tpsStr}</span>
+          <span class="stat-label">TPS</span>
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+
+  items.querySelectorAll('.dropdown-item').forEach(el => {
+    el.addEventListener('click', () => {
+      currentModel = el.dataset.id;
+      localStorage.setItem('or_model', currentModel);
+      const m = freeModels.find(m => m.id === currentModel);
+      $('model-btn-label').textContent = m ? m.name : currentModel;
+      $('model-status').textContent = '✓ ' + (m ? m.name : currentModel);
+      $('model-status').className = 'model-status ok';
+      closeDropdown();
+      updateSendBtn();
+      fetchModelPerf(currentModel, true);
+      renderDropdownItems(freeModels, $('model-search').value);
+    });
+  });
+}
+
+/* ドロップダウン開閉 */
+$('model-dropdown-btn').addEventListener('click', e => {
+  e.stopPropagation();
+  const list = $('model-dropdown-list');
+  const btn  = $('model-dropdown-btn');
+  const isOpen = list.classList.contains('open');
+  if (isOpen) { closeDropdown(); } else {
+    list.classList.add('open');
+    btn.classList.add('open');
+    $('model-search').focus();
+  }
+});
+
+document.addEventListener('click', e => {
+  if (!$('model-dropdown').contains(e.target)) closeDropdown();
+});
+
+function closeDropdown() {
+  $('model-dropdown-list').classList.remove('open');
+  $('model-dropdown-btn').classList.remove('open');
+}
+
+$('model-search').addEventListener('input', () => {
+  renderDropdownItems(freeModels, $('model-search').value);
+});
+
+/* ─────── perf fetch ─────── */
+async function fetchModelPerf(modelId, updateHeader) {
+  try {
+    const parts = modelId.replace(/:free$/, '').split('/');
+    const author = parts[0];
+    const slug = parts.slice(1).join('/');
+    const res = await fetch(`https://openrouter.ai/api/v1/models/${author}/${slug}/endpoints`, {
+      headers: apiKey ? { 'Authorization': 'Bearer ' + apiKey } : {}
+    });
+    if (!res.ok) return;
+    const data = await res.json();
+    const endpoints = data?.data?.endpoints || [];
+    if (!endpoints.length) return;
+
+    let latSum = 0, tpsSum = 0, latCount = 0, tpsCount = 0;
+    for (const ep of endpoints) {
+      if (ep.latency_last_30m?.p50 != null)    { latSum += ep.latency_last_30m.p50;    latCount++; }
+      if (ep.throughput_last_30m?.p50 != null) { tpsSum += ep.throughput_last_30m.p50; tpsCount++; }
+    }
+    const ttft = latCount ? latSum / latCount : null;
+    const tps  = tpsCount ? tpsSum / tpsCount : null;
+
+    // freeModels に保存
+    const m = freeModels.find(m => m.id === modelId);
+    if (m) { m.ttft = ttft; m.tps = tps; }
+
+    // ドロップダウン内の該当行を更新
+    const key = modelId.replace(/[^a-z0-9]/gi,'_');
+    const ttftEl = document.getElementById('dd-ttft-' + key);
+    const tpsEl  = document.getElementById('dd-tps-'  + key);
+    if (ttftEl) ttftEl.textContent = fmtTTFT(ttft);
+    if (tpsEl)  tpsEl.textContent  = tps  !== null ? tps.toFixed(1)         : '—';
+
+    // ヘッダーバッジ更新
+    if (updateHeader) {
+      const badges = $('perf-badges');
+      badges.style.display = 'flex';
+      badges.innerHTML = '';
+      if (ttft !== null) badges.innerHTML += `<div class="perf-badge"><span class="badge-label">TTFT</span><span class="badge-val" data-type="ttft">${fmtTTFT(ttft)}</span></div>`;
+      if (tps  !== null) badges.innerHTML += `<div class="perf-badge"><span class="badge-label">TPS</span><span class="badge-val">${tps.toFixed(1)}</span></div>`;
+      if (!badges.innerHTML) badges.style.display = 'none';
+    }
+  } catch {}
+}
+
+async function fetchAllPerf() {
+  // 並列でまとめて取得（最大8並列）
+  const BATCH = 8;
+  for (let i = 0; i < freeModels.length; i += BATCH) {
+    const batch = freeModels.slice(i, i + BATCH);
+    await Promise.all(batch.map(m => fetchModelPerf(m.id, false)));
+  }
+}
 
 function updateSendBtn() {
   const canSend = apiKey && currentModel && !isStreaming;
@@ -725,6 +1116,14 @@ async function sendMessage() {
 
   let fullText = '';
 
+  if (!apiKey) {
+    bubble.innerHTML = '<span style="color:var(--red);">APIキーが設定されていません。⚙ から設定してください。</span>';
+    isStreaming = false;
+    updateSendBtn();
+    $('stop-btn').classList.remove('visible');
+    return;
+  }
+
   try {
     const res = await fetch('https://openrouter.ai/api/v1/chat/completions', {
       method: 'POST',
@@ -769,6 +1168,7 @@ async function sendMessage() {
             if (!started) { bubble.innerHTML = ''; started = true; }
             fullText += delta;
             bubble.innerHTML = renderMarkdown(fullText);
+            highlightAll(bubble);
             scrollBottom();
           }
         } catch {}
@@ -781,6 +1181,7 @@ async function sendMessage() {
     if (err.name === 'AbortError') {
       if (fullText) {
         bubble.innerHTML = renderMarkdown(fullText) + '<br><span style="color:var(--text3);font-size:12px;">— 停止しました</span>';
+        highlightAll(bubble);
         messages.push({ role: 'assistant', content: fullText });
       } else {
         aiRow.remove();
@@ -831,21 +1232,29 @@ function appendMessage(role, text, streaming = false) {
   row.appendChild(avatar);
   row.appendChild(bubble);
   container.appendChild(row);
-  scrollBottom();
+  scrollBottom(true);
   return row;
 }
 
-function scrollBottom() {
+function isAtBottom() {
   const c = $('messages');
-  c.scrollTop = c.scrollHeight;
+  return c.scrollHeight - c.scrollTop - c.clientHeight < 60;
+}
+
+function scrollBottom(force = false) {
+  const c = $('messages');
+  if (force || isAtBottom()) c.scrollTop = c.scrollHeight;
 }
 
 /* ─────── minimal markdown renderer ─────── */
 function renderMarkdown(text) {
   let h = escHtml(text);
   // code blocks
-  h = h.replace(/```[\w]*\n?([\s\S]*?)```/g, (_, code) =>
-    `<pre><code>${code.trim()}</code></pre>`);
+  h = h.replace(/```([\w]*)\n?([\s\S]*?)```/g, (_, lang, code) => {
+    const id = 'cb' + Math.random().toString(36).slice(2,8);
+    const langLabel = lang || 'code';
+    return `<pre><div class="code-header"><span class="code-lang">${langLabel}</span><button class="copy-btn" onclick="copyCode('${id}')">コピー</button></div><code id="${id}" class="language-${lang || 'plaintext'}">${code.trim()}</code></pre>`;
+  });
   // inline code
   h = h.replace(/`([^`]+)`/g, '<code>$1</code>');
   // headings
@@ -873,6 +1282,26 @@ function renderMarkdown(text) {
 
 function escHtml(s) {
   return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+function copyCode(id) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  navigator.clipboard.writeText(el.textContent).then(() => {
+    const btn = el.closest('pre').querySelector('.copy-btn');
+    if (btn) {
+      btn.textContent = 'コピー済み';
+      btn.classList.add('copied');
+      setTimeout(() => { btn.textContent = 'コピー'; btn.classList.remove('copied'); }, 2000);
+    }
+  });
+}
+
+function highlightAll(container) {
+  if (typeof hljs === 'undefined') return;
+  container.querySelectorAll('pre code').forEach(el => {
+    if (!el.dataset.highlighted) hljs.highlightElement(el);
+  });
 }
 
 /* ─────── error toast ─────── */
