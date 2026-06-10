@@ -415,6 +415,7 @@ textarea.sys-textarea { min-height: 70px; resize: vertical; line-height: 1.5; }
       <textarea class="sys-textarea" id="sys-prompt-input" placeholder="例: You are a helpful assistant. Answer in Japanese."></textarea>
     </div>
     <button class="btn-save" id="save-settings-btn" style="width:100%;margin-top:4px;">設定を保存</button>
+    <button id="refresh-models-btn" style="width:100%;margin-top:6px;background:transparent;border:0.5px solid var(--border2);border-radius:var(--rs);color:var(--text2);font-size:12px;padding:7px;cursor:pointer;font-family:inherit;" onclick="loadModels(true);$('settings-panel').classList.remove('open');showToast('モデル一覧を再取得しました', false);">↺ モデル一覧を再取得</button>
   </div>
 </header>
 
@@ -506,14 +507,14 @@ $('save-key-btn').addEventListener('click', () => {
   saveSettings();
   showToast('APIキーを保存しました', false);
   $('settings-panel').classList.remove('open');
-  if (apiKey) loadModels();
+  if (apiKey) loadModels(true);
 });
 
 $('save-settings-btn').addEventListener('click', () => {
   saveSettings();
   showToast('設定を保存しました', false);
   $('settings-panel').classList.remove('open');
-  if (apiKey) loadModels();
+  if (apiKey) loadModels(true);
 });
 
 /* ═══════════════════════════════════════════
@@ -615,17 +616,43 @@ function selectModel(id) {
 /* ═══════════════════════════════════════════
    Load models
 ═══════════════════════════════════════════ */
-async function loadModels() {
+const MODELS_CACHE_KEY = 'or_models_cache';
+const MODELS_CACHE_TTL = 60 * 60 * 1000; // 1時間
+
+function loadModelsFromCache() {
+  try {
+    const raw = localStorage.getItem(MODELS_CACHE_KEY);
+    if (!raw) return null;
+    const { ts, data } = JSON.parse(raw);
+    if (Date.now() - ts > MODELS_CACHE_TTL) return null;
+    return data;
+  } catch { return null; }
+}
+
+function saveModelsToCache(data) {
+  try {
+    localStorage.setItem(MODELS_CACHE_KEY, JSON.stringify({ ts: Date.now(), data }));
+  } catch {}
+}
+
+async function loadModels(forceRefresh = false) {
   $('model-status').className   = 'model-status loading';
   $('model-status').textContent = '読み込み中…';
   $('model-dropdown-items').innerHTML = '<div class="dropdown-loading">読み込み中…</div>';
 
   try {
-    const res  = await fetch('https://openrouter.ai/api/v1/models',
-      { headers: apiKey ? { Authorization: 'Bearer ' + apiKey } : {} });
-    const data = await res.json();
+    let rawModels = forceRefresh ? null : loadModelsFromCache();
+    const fromCache = rawModels !== null;
 
-    freeModels = (data.data || [])
+    if (!rawModels) {
+      const res  = await fetch('https://openrouter.ai/api/v1/models',
+        { headers: apiKey ? { Authorization: 'Bearer ' + apiKey } : {} });
+      const data = await res.json();
+      rawModels  = data.data || [];
+      saveModelsToCache(rawModels);
+    }
+
+    freeModels = rawModels
       .filter(m => { const p = m.pricing; return p && parseFloat(p.prompt) === 0 && parseFloat(p.completion) === 0; })
       .sort((a, b) => (a.name || a.id).localeCompare(b.name || b.id))
       .map(m => ({ id: m.id, name: m.name || m.id, ttft: null, tps: null }));
@@ -642,11 +669,11 @@ async function loadModels() {
     const saved = freeModels.find(m => m.id === currentModel);
     if (saved) {
       $('model-btn-label').textContent = saved.name;
-      $('model-status').textContent    = '✓ ' + saved.name;
+      $('model-status').textContent    = '✓ ' + saved.name + (fromCache ? ' ·キャッシュ済' : '');
       $('model-status').className      = 'model-status ok';
       fetchModelPerf(currentModel, true);
     } else {
-      $('model-status').textContent = freeModels.length + ' 件の無料モデル';
+      $('model-status').textContent = freeModels.length + ' 件の無料モデル' + (fromCache ? '（キャッシュ）' : '');
       $('model-status').className   = 'model-status';
     }
 
